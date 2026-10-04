@@ -44,6 +44,12 @@ const routes = [
         component: () => import('@/views/admin/ManagePengguna.vue'),
         meta: { adminOnly: true },
       },
+      {
+        path: 'log-aktivitas',
+        name: 'admin-log',
+        component: () => import('@/views/admin/ManageLog.vue'),
+        meta: { adminOnly: true },
+      },
     ],
   },
 ]

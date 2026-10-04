@@ -13,6 +13,7 @@ import {
   Plus, ListChecks, Eye, ExternalLink,
   ChevronDown, UserCog, KeyRound, ShieldUser,
   Home,
+  Lock, Download,
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -80,6 +81,8 @@ const ICONS = {
   key: KeyRound,
   shieldUser: ShieldUser,
   home: Home,
+  lock: Lock,
+  download: Download,
 }
 
 const Comp = ICONS[props.name] || Sparkles

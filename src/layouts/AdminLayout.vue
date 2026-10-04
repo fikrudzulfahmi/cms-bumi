@@ -24,6 +24,7 @@ const menus = [
   { label: 'Ekstrakurikuler', to: '/admin/ekstrakurikuler', icon: 'drama', adminOnly: true },
   { label: 'Galeri', to: '/admin/galeri', icon: 'images', adminOnly: true },
   { label: 'Akun Pengguna', to: '/admin/pengguna', icon: 'shieldUser', adminOnly: true },
+  { label: 'Log Aktivitas', to: '/admin/log-aktivitas', icon: 'shield', adminOnly: true },
 ]
 
 const visibleMenus = computed(() => menus.filter((m) => !m.adminOnly || auth.isAdmin))
