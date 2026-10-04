@@ -3,6 +3,7 @@ name: Deploy Frontend (cPanel)
 on:
   push:
     branches: [main]
+  workflow_dispatch:
 
 jobs:
   build-and-deploy:
@@ -24,13 +25,41 @@ jobs:
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
 
-      - name: Deploy dist to cPanel
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_KEY }}
-          port: ${{ secrets.SSH_PORT || '22' }}
-          source: 'dist'
-          target: ${{ secrets.DEPLOY_PATH }}
-          strip_components: 1
+      - name: Deploy ke cPanel (SSH/SCP)
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+        run: |
+          set -euo pipefail
+          PORT="${SSH_PORT:-22}"
+
+          echo "================= DIAGNOSTIK SECRET ================="
+          echo "SSH_HOST   = [$SSH_HOST]"
+          echo "SSH_USER   = [$SSH_USER]"
+          echo "SSH_PORT   = [$PORT]"
+          echo "DEPLOY_PATH= [$DEPLOY_PATH]"
+          echo "SSH_KEY    : panjang=${#SSH_KEY} huruf, baris=$(printf '%s' "$SSH_KEY" | wc -l)"
+          echo "SSH_KEY    : awal -> $(printf '%s' "$SSH_KEY" | head -c 40)"
+          echo "====================================================="
+
+          mkdir -p ~/.ssh
+          printf '%s' "$SSH_KEY" | sed 's/\\n/\n/g' > ~/.ssh/deploy_key
+          printf '\n' >> ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "$PORT" -H "$SSH_HOST" >> ~/.ssh/known_hosts 2>/dev/null || true
+
+          echo "================= TES KONEKSI SSH ================="
+          ssh -i ~/.ssh/deploy_key -p "$PORT" -o StrictHostKeyChecking=no -o ConnectTimeout=20 \
+            "$SSH_USER@$SSH_HOST" "echo TERHUBUNG sebagai \$(whoami) di \$(hostname)"
+          echo "==================================================="
+
+          echo "================= UPLOAD & EKSTRAK ================="
+          tar czf /tmp/deploy.tgz -C dist .
+          scp -i ~/.ssh/deploy_key -P "$PORT" -o StrictHostKeyChecking=no \
+            /tmp/deploy.tgz "$SSH_USER@$SSH_HOST:~/cms_bumi_upload.tgz"
+          ssh -i ~/.ssh/deploy_key -p "$PORT" -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" \
+            "mkdir -p '$DEPLOY_PATH' && tar xzf ~/cms_bumi_upload.tgz -C '$DEPLOY_PATH' && rm -f ~/cms_bumi_upload.tgz && echo '--- isi docroot ---' && ls -la '$DEPLOY_PATH' | head -15"
+          echo "===================== SELESAI ====================="
