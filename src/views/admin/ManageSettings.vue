@@ -123,6 +123,16 @@ async function save() {
       <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <h2 class="mb-4 font-extrabold text-brand-900">Logo</h2>
         <ImageUpload v-model="form.logo" dir="logo" />
+        <p class="mt-2 text-xs text-gray-500">Dipakai di navbar, footer, dan sebagai favicon situs.</p>
+      </div>
+
+      <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+        <h2 class="mb-1 font-extrabold text-brand-900">Gambar Hero</h2>
+        <p class="mb-4 text-xs text-gray-500">
+          Tampil di bagian paling atas beranda. Dianjurkan PNG transparan (cut-out) agar menyatu
+          dengan latar. Bila dikosongkan, hero memakai foto galeri pertama.
+        </p>
+        <ImageUpload v-model="form.hero_gambar" dir="hero" />
       </div>
     </div>
   </div>

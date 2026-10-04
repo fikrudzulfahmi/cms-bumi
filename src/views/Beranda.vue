@@ -1,6 +1,6 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
-import { api } from '@/services/api'
+import { api, assetUrl } from '@/services/api'
 import { useCmsStore } from '@/stores/cms'
 import { stripHtml, truncate } from '@/utils/format'
 import SectionHeader from '@/components/public/SectionHeader.vue'
@@ -17,7 +17,10 @@ const umpanBalik = ref([])
 const ekstra = ref([])
 const galeri = ref([])
 
-const heroImage = computed(() => galeri.value[0]?.gambar_url || '')
+// Gambar hero: pakai Pengaturan → Gambar Hero; kalau kosong, jatuh ke foto galeri pertama.
+const heroImage = computed(() =>
+  cms.settings.hero_gambar ? assetUrl(cms.settings.hero_gambar) : galeri.value[0]?.gambar_url || ''
+)
 
 const stats = computed(() => [
   { value: cms.settings.jumlah_siswa || '450', label: 'Peserta Didik' },
@@ -107,9 +110,9 @@ onMounted(async () => {
         <!-- Hero visual -->
         <div class="relative hidden lg:block">
           <div class="animate-float">
-            <div class="relative mx-auto max-w-md overflow-hidden rounded-[2rem] border-4 border-white/20 shadow-2xl">
-              <img v-if="heroImage" :src="heroImage" alt="Madrasah" class="h-[420px] w-full object-cover" />
-              <div v-else class="grid h-[420px] w-full place-items-center bg-gradient-to-br from-brand-500 to-brand-800 text-white/70">
+            <div class="relative mx-auto max-w-md overflow-hidden rounded-[2rem] border-4 border-white/20 bg-gradient-to-br from-brand-500 to-brand-800 shadow-2xl">
+              <img v-if="heroImage" :src="heroImage" alt="Peserta didik madrasah" class="h-[440px] w-full object-contain" />
+              <div v-else class="grid h-[440px] w-full place-items-center text-white/70">
                 <AppIcon name="landmark" :size="64" />
               </div>
               <div class="absolute inset-0 bg-gradient-to-t from-brand-950/60 to-transparent"></div>
