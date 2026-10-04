@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { api } from '@/services/api'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 const form = ref({ sejarah: '', visi: '', misi: '' })
 const saving = ref(false)
@@ -40,7 +41,9 @@ async function save() {
       </button>
     </div>
 
-    <p v-if="saved" class="mb-4 rounded-xl bg-brand-100 px-4 py-2.5 text-sm font-bold text-brand-700">✅ Tersimpan!</p>
+    <p v-if="saved" class="mb-4 flex items-center gap-2 rounded-xl bg-brand-100 px-4 py-2.5 text-sm font-bold text-brand-700">
+      <AppIcon name="check" :size="16" /> Tersimpan!
+    </p>
 
     <div class="space-y-6">
       <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">

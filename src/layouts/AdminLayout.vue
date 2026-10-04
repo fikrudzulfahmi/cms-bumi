@@ -3,22 +3,23 @@ import { ref, computed } from 'vue'
 import { RouterLink, useRoute, RouterView } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import LogoMark from '@/components/public/LogoMark.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 const auth = useAuthStore()
 const route = useRoute()
 const open = ref(false)
 
 const menus = [
-  { label: 'Dashboard', to: '/admin', icon: '📊' },
-  { label: 'Pengaturan', to: '/admin/pengaturan', icon: '⚙️' },
-  { label: 'Profil Sekolah', to: '/admin/profil', icon: '🏫' },
-  { label: 'Guru & Karyawan', to: '/admin/guru', icon: '👥' },
-  { label: 'Berita', to: '/admin/berita', icon: '📰' },
-  { label: 'Umpan Balik', to: '/admin/umpan-balik', icon: '💬' },
-  { label: 'Jurusan', to: '/admin/jurusan', icon: '📚' },
-  { label: 'Fasilitas', to: '/admin/fasilitas', icon: '🏛️' },
-  { label: 'Ekstrakurikuler', to: '/admin/ekstrakurikuler', icon: '🎭' },
-  { label: 'Galeri', to: '/admin/galeri', icon: '🖼️' },
+  { label: 'Dashboard', to: '/admin', icon: 'dashboard' },
+  { label: 'Pengaturan', to: '/admin/pengaturan', icon: 'settings' },
+  { label: 'Profil Sekolah', to: '/admin/profil', icon: 'school' },
+  { label: 'Guru & Karyawan', to: '/admin/guru', icon: 'users' },
+  { label: 'Berita', to: '/admin/berita', icon: 'newspaper' },
+  { label: 'Umpan Balik', to: '/admin/umpan-balik', icon: 'chat' },
+  { label: 'Jurusan', to: '/admin/jurusan', icon: 'book' },
+  { label: 'Fasilitas', to: '/admin/fasilitas', icon: 'landmark' },
+  { label: 'Ekstrakurikuler', to: '/admin/ekstrakurikuler', icon: 'drama' },
+  { label: 'Galeri', to: '/admin/galeri', icon: 'images' },
 ]
 
 const pageTitle = computed(() => {
@@ -55,16 +56,16 @@ async function logout() {
           :class="route.path === m.to ? 'bg-brand-600 text-white' : 'text-brand-200 hover:bg-white/10 hover:text-white'"
           @click="open = false"
         >
-          <span>{{ m.icon }}</span>{{ m.label }}
+          <AppIcon :name="m.icon" :size="18" />{{ m.label }}
         </RouterLink>
       </nav>
 
       <div class="space-y-2 border-t border-white/10 p-4">
         <RouterLink to="/" target="_blank" class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold text-brand-200 hover:bg-white/10 hover:text-white">
-          🌐 Lihat Situs
+          <AppIcon name="globe" :size="18" /> Lihat Situs
         </RouterLink>
         <button @click="logout" class="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold text-red-300 hover:bg-white/10">
-          🚪 Keluar
+          <AppIcon name="logout" :size="18" /> Keluar
         </button>
       </div>
     </aside>

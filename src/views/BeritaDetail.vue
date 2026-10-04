@@ -4,6 +4,7 @@ import { useRoute, RouterLink } from 'vue-router'
 import { api } from '@/services/api'
 import { formatDate } from '@/utils/format'
 import NewsCard from '@/components/public/NewsCard.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 const route = useRoute()
 const post = ref(null)
@@ -33,20 +34,24 @@ onMounted(async () => {
 <template>
   <div class="mx-auto max-w-4xl px-4 py-12 sm:px-6">
     <div v-if="notFound" class="py-20 text-center">
-      <div class="text-6xl">😕</div>
+      <AppIcon name="info" :size="56" class="mx-auto text-brand-300" />
       <h1 class="mt-4 text-2xl font-extrabold text-brand-950">Berita tidak ditemukan</h1>
-      <RouterLink to="/berita" class="mt-4 inline-block font-bold text-brand-600 hover:underline">← Kembali ke Berita</RouterLink>
+      <RouterLink to="/berita" class="mt-4 inline-flex items-center gap-1.5 font-bold text-brand-600 hover:underline">
+        <AppIcon name="arrowLeft" :size="18" /> Kembali ke Berita
+      </RouterLink>
     </div>
 
     <template v-else-if="post">
       <RouterLink to="/berita" class="inline-flex items-center gap-2 text-sm font-bold text-brand-600 hover:underline">
-        ← Kembali ke Berita
+        <AppIcon name="arrowLeft" :size="18" /> Kembali ke Berita
       </RouterLink>
 
       <div class="mt-6">
         <span class="inline-block rounded-full bg-brand-100 px-4 py-1 text-xs font-bold text-brand-700">{{ kategoriLabel }}</span>
         <h1 class="mt-4 text-3xl font-extrabold leading-tight text-brand-950 sm:text-4xl">{{ post.judul }}</h1>
-        <div class="mt-3 text-sm text-gray-400">📅 {{ formatDate(post.tanggal) }}</div>
+        <div class="mt-3 flex items-center gap-1.5 text-sm text-gray-400">
+          <AppIcon name="calendar" :size="15" /> {{ formatDate(post.tanggal) }}
+        </div>
       </div>
 
       <img v-if="post.gambar_url" :src="post.gambar_url" :alt="post.judul" class="mt-8 aspect-video w-full rounded-3xl object-cover shadow-lg" />

@@ -3,6 +3,7 @@ import { ref, onMounted, watch } from 'vue'
 import { api } from '@/services/api'
 import PageHero from '@/components/public/PageHero.vue'
 import NewsCard from '@/components/public/NewsCard.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 const tabs = [
   { key: 'berita', label: 'Berita' },
@@ -67,7 +68,7 @@ watch(active, load)
       <div v-else class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <div v-for="f in feedbacks" :key="f.id" class="rounded-3xl glass-card p-6">
           <div class="mb-4 flex gap-1 text-gold-500">
-            <span v-for="n in 5" :key="n">★</span>
+            <AppIcon v-for="n in 5" :key="n" name="star" :size="16" class="fill-current" />
           </div>
           <p class="text-sm leading-relaxed text-gray-600">“{{ f.pesan }}”</p>
           <div class="mt-5 flex items-center gap-3">

@@ -3,6 +3,7 @@ import { ref, onMounted } from 'vue'
 import { api, assetUrl } from '@/services/api'
 import ImageUpload from './ImageUpload.vue'
 import { formatDate, stripHtml } from '@/utils/format'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 const props = defineProps({
   endpoint: { type: String, required: true },
@@ -93,7 +94,7 @@ function display(item, name) {
       ? `<img src="${assetUrl(v)}" class="h-10 w-10 rounded-lg object-cover" />`
       : '<span class="text-gray-300">—</span>'
   }
-  if (f.type === 'boolean') return v ? '✅' : '—'
+  if (f.type === 'boolean') return v ? 'Ya' : '—'
   if (f.type === 'select') {
     const opt = (f.options || []).find((o) => o.value === v)
     return opt ? opt.label : (v || '—')
@@ -117,7 +118,7 @@ onMounted(load)
         class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-brand-600/25 transition-transform hover:scale-[1.03]"
         @click="openCreate"
       >
-        + Tambah
+        <AppIcon name="plus" :size="16" /> Tambah
       </button>
     </div>
 
@@ -154,7 +155,9 @@ onMounted(load)
       <div class="my-8 w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl">
         <div class="mb-5 flex items-center justify-between">
           <h2 class="text-xl font-extrabold text-brand-950">{{ editing ? 'Edit' : 'Tambah' }} {{ title }}</h2>
-          <button class="grid h-9 w-9 place-items-center rounded-lg hover:bg-gray-100" @click="showForm = false">✕</button>
+          <button class="grid h-9 w-9 place-items-center rounded-lg text-gray-500 hover:bg-gray-100" @click="showForm = false">
+            <AppIcon name="close" :size="18" />
+          </button>
         </div>
 
         <div class="grid gap-4">

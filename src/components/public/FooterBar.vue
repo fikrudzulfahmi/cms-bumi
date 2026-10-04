@@ -1,6 +1,7 @@
 <script setup>
 import { useCmsStore } from '@/stores/cms'
 import LogoMark from './LogoMark.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 const cms = useCmsStore()
 const tahun = new Date().getFullYear()
@@ -50,9 +51,9 @@ const tahun = new Date().getFullYear()
         <div>
           <h4 class="mb-4 text-sm font-bold uppercase tracking-wider text-gold-400">Kontak</h4>
           <ul class="space-y-2.5 text-sm text-brand-200/80">
-            <li class="flex gap-2"><span>📍</span>{{ cms.settings.alamat || '—' }}</li>
-            <li class="flex gap-2"><span>📞</span>{{ cms.settings.telepon || '—' }}</li>
-            <li class="flex gap-2"><span>✉️</span>{{ cms.settings.email || '—' }}</li>
+            <li class="flex gap-2"><AppIcon name="pin" :size="16" class="mt-0.5 shrink-0 text-gold-400" />{{ cms.settings.alamat || '—' }}</li>
+            <li class="flex gap-2"><AppIcon name="phone" :size="16" class="mt-0.5 shrink-0 text-gold-400" />{{ cms.settings.telepon || '—' }}</li>
+            <li class="flex gap-2"><AppIcon name="mail" :size="16" class="mt-0.5 shrink-0 text-gold-400" />{{ cms.settings.email || '—' }}</li>
           </ul>
         </div>
       </div>

@@ -1,10 +1,11 @@
 <script setup>
 import { assetUrl } from '@/services/api'
 import { truncate } from '@/utils/format'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 defineProps({
   item: { type: Object, required: true },
-  icon: { type: String, default: '✨' },
+  icon: { type: String, default: 'sparkles' },
 })
 </script>
 
@@ -18,9 +19,13 @@ defineProps({
         class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         loading="lazy"
       />
-      <div v-else class="grid h-full w-full place-items-center bg-gradient-to-br from-brand-500 to-brand-700 text-4xl text-white/80">{{ icon }}</div>
+      <div v-else class="grid h-full w-full place-items-center bg-gradient-to-br from-brand-500 to-brand-700 text-white/80">
+        <AppIcon :name="icon" :size="40" />
+      </div>
       <div class="absolute inset-0 bg-gradient-to-t from-black/45 to-transparent"></div>
-      <span class="absolute bottom-3 left-4 text-xl text-white drop-shadow">{{ icon }}</span>
+      <span class="absolute bottom-3 left-4 grid h-9 w-9 place-items-center rounded-xl bg-white/15 text-white shadow-lg backdrop-blur">
+        <AppIcon :name="icon" :size="18" />
+      </span>
     </div>
     <div class="p-4">
       <h3 class="font-bold text-brand-950">{{ item.nama }}</h3>

@@ -4,6 +4,7 @@ import { RouterLink } from 'vue-router'
 import { api } from '@/services/api'
 import PageHero from '@/components/public/PageHero.vue'
 import { truncate } from '@/utils/format'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 const majors = ref([])
 
@@ -26,7 +27,9 @@ onMounted(async () => {
         >
           <div class="relative h-52 overflow-hidden">
             <img v-if="m.gambar_url" :src="m.gambar_url" :alt="m.nama" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" />
-            <div v-else class="grid h-full w-full place-items-center bg-gradient-to-br from-brand-500 to-brand-700 text-6xl text-white/80">📚</div>
+            <div v-else class="grid h-full w-full place-items-center bg-gradient-to-br from-brand-500 to-brand-700 text-white/80">
+              <AppIcon name="book" :size="52" />
+            </div>
             <div class="absolute inset-0 bg-gradient-to-t from-brand-950/70 to-transparent"></div>
             <span class="absolute right-4 top-4 rounded-full bg-gold-400 px-3 py-1 text-xs font-bold text-brand-950 shadow">Akreditasi {{ m.akreditasi || '—' }}</span>
             <h2 class="absolute bottom-4 left-5 text-2xl font-extrabold text-white">{{ m.nama }}</h2>
@@ -35,7 +38,7 @@ onMounted(async () => {
             <p class="text-sm leading-relaxed text-gray-600">{{ truncate(m.deskripsi, 140) }}</p>
             <span class="mt-4 inline-flex items-center gap-1 font-bold text-gold-600">
               Selengkapnya
-              <svg class="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14M13 6l6 6-6 6" /></svg>
+              <AppIcon name="arrowRight" :size="16" class="transition-transform group-hover:translate-x-1" />
             </span>
           </div>
         </RouterLink>

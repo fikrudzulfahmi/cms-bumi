@@ -5,6 +5,7 @@ import { useCmsStore } from '@/stores/cms'
 import PageHero from '@/components/public/PageHero.vue'
 import SectionHeader from '@/components/public/SectionHeader.vue'
 import GuruCard from '@/components/public/GuruCard.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 const cms = useCmsStore()
 const guru = ref([])
@@ -33,12 +34,12 @@ onMounted(async () => {
         <SectionHeader eyebrow="Landasan" title="Visi &amp; Misi" />
         <div class="grid gap-6 md:grid-cols-2">
           <div class="rounded-3xl bg-white p-8 shadow-lg shadow-brand-900/5">
-            <div class="mb-3 text-3xl">🎯</div>
+            <AppIcon name="target" :size="28" class="mb-3 text-brand-600" />
             <h3 class="mb-2 text-lg font-extrabold text-brand-900">Visi</h3>
             <p class="leading-relaxed text-gray-600">{{ cms.profile?.visi || '—' }}</p>
           </div>
           <div class="rounded-3xl bg-white p-8 shadow-lg shadow-brand-900/5">
-            <div class="mb-3 text-3xl">📌</div>
+            <AppIcon name="clipboard" :size="28" class="mb-3 text-gold-500" />
             <h3 class="mb-2 text-lg font-extrabold text-brand-900">Misi</h3>
             <div class="prose-cms text-gray-600" v-html="cms.profile?.misi || '<p>—</p>'"></div>
           </div>

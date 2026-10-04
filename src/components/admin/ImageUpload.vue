@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { api, assetUrl } from '@/services/api'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -35,7 +36,7 @@ async function onFile(e) {
     <div class="flex items-start gap-3">
       <div class="relative h-24 w-24 shrink-0 overflow-hidden rounded-xl border border-gray-200 bg-gray-50">
         <img v-if="modelValue" :src="assetUrl(modelValue)" class="h-full w-full object-cover" />
-        <div v-else class="grid h-full w-full place-items-center text-3xl text-gray-300">🖼️</div>
+        <div v-else class="grid h-full w-full place-items-center text-gray-300"><AppIcon name="image" :size="32" /></div>
       </div>
       <div class="flex-1 space-y-2">
         <button
@@ -44,7 +45,8 @@ async function onFile(e) {
           class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-3 py-2 text-xs font-bold text-white hover:bg-brand-700 disabled:opacity-50"
           @click="input && input.click()"
         >
-          {{ uploading ? 'Mengunggah…' : '⬆️ Unggah Gambar' }}
+          <AppIcon name="upload" :size="16" />
+          {{ uploading ? 'Mengunggah…' : 'Unggah Gambar' }}
         </button>
         <input ref="input" type="file" accept="image/*" class="hidden" @change="onFile" />
         <button

@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import LogoMark from '@/components/public/LogoMark.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 const auth = useAuthStore()
 const route = useRoute()
@@ -60,7 +61,9 @@ async function submit() {
           </button>
         </form>
 
-        <RouterLink to="/" class="mt-5 block text-center text-sm font-semibold text-gray-400 hover:text-brand-600">← Kembali ke beranda</RouterLink>
+        <RouterLink to="/" class="mt-5 flex items-center justify-center gap-1.5 text-sm font-semibold text-gray-400 hover:text-brand-600">
+          <AppIcon name="arrowLeft" :size="16" /> Kembali ke beranda
+        </RouterLink>
       </div>
     </div>
   </div>
