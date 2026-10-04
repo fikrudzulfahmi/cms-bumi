@@ -3,6 +3,9 @@ import { ref, onMounted } from 'vue'
 import { api } from '@/services/api'
 import ImageUpload from '@/components/admin/ImageUpload.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import { useCmsStore } from '@/stores/cms'
+
+const cms = useCmsStore()
 
 const form = ref({})
 const saving = ref(false)
@@ -66,6 +69,7 @@ async function save() {
   saved.value = false
   try {
     await api('/admin/settings', { method: 'PUT', body: { settings: form.value } })
+    await cms.reload() // logo & identitas langsung ter-update di navbar/footer
     saved.value = true
     setTimeout(() => (saved.value = false), 2500)
   } catch (e) {

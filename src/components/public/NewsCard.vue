@@ -47,6 +47,11 @@ const kategoriColor = computed(() => {
       <div class="mb-2 flex items-center gap-2 text-xs font-medium text-gray-400">
         <AppIcon name="calendar" :size="14" />
         <span>{{ formatDate(post.tanggal) }}</span>
+        <template v-if="post.author_name">
+          <span class="text-gray-300">·</span>
+          <AppIcon name="users" :size="14" />
+          <span>{{ post.author_name }}</span>
+        </template>
       </div>
       <h3 class="line-clamp-2 font-bold leading-snug text-brand-950 transition-colors group-hover:text-brand-600">
         {{ post.judul }}

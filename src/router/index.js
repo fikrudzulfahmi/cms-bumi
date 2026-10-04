@@ -35,6 +35,13 @@ const routes = [
       { path: 'fasilitas', name: 'admin-fasilitas', component: () => import('@/views/admin/ManageFasilitas.vue') },
       { path: 'ekstrakurikuler', name: 'admin-ekstra', component: () => import('@/views/admin/ManageEkstra.vue') },
       { path: 'galeri', name: 'admin-galeri', component: () => import('@/views/admin/ManageGaleri.vue') },
+      { path: 'akun', name: 'admin-akun', component: () => import('@/views/admin/ManageAkun.vue') },
+      {
+        path: 'pengguna',
+        name: 'admin-pengguna',
+        component: () => import('@/views/admin/ManagePengguna.vue'),
+        meta: { adminOnly: true },
+      },
     ],
   },
   { path: '/:pathMatch(.*)*', redirect: '/' },
@@ -55,6 +62,10 @@ router.beforeEach((to) => {
     return { name: 'admin-login', query: { redirect: to.fullPath } }
   }
   if (to.name === 'admin-login' && auth.isAuthenticated) {
+    return { name: 'admin-dashboard' }
+  }
+  // Halaman khusus admin (mis. Akun Pengguna) ditolak untuk peran penulis
+  if (to.meta.adminOnly && !auth.isAdmin) {
     return { name: 'admin-dashboard' }
   }
 })

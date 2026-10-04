@@ -1,26 +1,32 @@
 <script setup>
-import { ref, computed } from 'vue'
-import { RouterLink, useRoute, RouterView } from 'vue-router'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { RouterLink, useRoute, RouterView, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import LogoMark from '@/components/public/LogoMark.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 
 const auth = useAuthStore()
 const route = useRoute()
-const open = ref(false)
+const router = useRouter()
+const open = ref(false) // sidebar mobile
+const userMenu = ref(false) // dropdown akun
 
+// adminOnly = hanya terlihat untuk peran 'admin'
 const menus = [
-  { label: 'Dashboard', to: '/admin', icon: 'dashboard' },
-  { label: 'Pengaturan', to: '/admin/pengaturan', icon: 'settings' },
-  { label: 'Profil Sekolah', to: '/admin/profil', icon: 'school' },
-  { label: 'Guru & Karyawan', to: '/admin/guru', icon: 'users' },
-  { label: 'Berita', to: '/admin/berita', icon: 'newspaper' },
-  { label: 'Umpan Balik', to: '/admin/umpan-balik', icon: 'chat' },
-  { label: 'Jurusan', to: '/admin/jurusan', icon: 'book' },
-  { label: 'Fasilitas', to: '/admin/fasilitas', icon: 'landmark' },
-  { label: 'Ekstrakurikuler', to: '/admin/ekstrakurikuler', icon: 'drama' },
-  { label: 'Galeri', to: '/admin/galeri', icon: 'images' },
+  { label: 'Dashboard', to: '/admin', icon: 'dashboard', adminOnly: false },
+  { label: 'Berita', to: '/admin/berita', icon: 'newspaper', adminOnly: false },
+  { label: 'Pengaturan', to: '/admin/pengaturan', icon: 'settings', adminOnly: true },
+  { label: 'Profil Sekolah', to: '/admin/profil', icon: 'school', adminOnly: true },
+  { label: 'Guru & Karyawan', to: '/admin/guru', icon: 'users', adminOnly: true },
+  { label: 'Umpan Balik', to: '/admin/umpan-balik', icon: 'chat', adminOnly: true },
+  { label: 'Jurusan', to: '/admin/jurusan', icon: 'book', adminOnly: true },
+  { label: 'Fasilitas', to: '/admin/fasilitas', icon: 'landmark', adminOnly: true },
+  { label: 'Ekstrakurikuler', to: '/admin/ekstrakurikuler', icon: 'drama', adminOnly: true },
+  { label: 'Galeri', to: '/admin/galeri', icon: 'images', adminOnly: true },
+  { label: 'Akun Pengguna', to: '/admin/pengguna', icon: 'shieldUser', adminOnly: true },
 ]
+
+const visibleMenus = computed(() => menus.filter((m) => !m.adminOnly || auth.isAdmin))
 
 const pageTitle = computed(() => {
   const m = menus.find((m) => m.to === route.path)
@@ -28,8 +34,22 @@ const pageTitle = computed(() => {
 })
 
 async function logout() {
+  userMenu.value = false
   await auth.logout()
+  router.push('/admin/login')
 }
+
+function goAccount() {
+  userMenu.value = false
+  router.push('/admin/akun')
+}
+
+function onDocClick(e) {
+  if (!e.target.closest('[data-usermenu]')) userMenu.value = false
+}
+
+onMounted(() => document.addEventListener('click', onDocClick))
+onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
 </script>
 
 <template>
@@ -49,7 +69,7 @@ async function logout() {
 
       <nav class="flex-1 space-y-1 overflow-y-auto px-3 py-3">
         <RouterLink
-          v-for="m in menus"
+          v-for="m in visibleMenus"
           :key="m.to"
           :to="m.to"
           class="flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors"
@@ -78,17 +98,41 @@ async function logout() {
       <header class="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-brand-100 bg-white/80 px-4 backdrop-blur sm:px-6">
         <div class="flex items-center gap-3">
           <button class="grid h-10 w-10 place-items-center rounded-xl text-brand-800 hover:bg-brand-50 lg:hidden" @click="open = true">
-            <svg class="h-6 w-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16" /></svg>
+            <AppIcon name="menu" :size="22" />
           </button>
           <h1 class="text-lg font-extrabold text-brand-950">{{ pageTitle }}</h1>
         </div>
-        <div class="flex items-center gap-3">
-          <div class="grid h-10 w-10 place-items-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white">
-            {{ (auth.user?.name || 'A')[0] }}
-          </div>
-          <div class="hidden leading-tight sm:block">
-            <div class="text-sm font-bold text-brand-950">{{ auth.user?.name }}</div>
-            <div class="text-xs text-gray-400">Administrator</div>
+
+        <!-- Menu akun -->
+        <div class="relative" data-usermenu>
+          <button
+            class="flex items-center gap-2.5 rounded-xl p-1.5 pr-2 transition-colors hover:bg-brand-50"
+            @click="userMenu = !userMenu"
+          >
+            <div class="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white">
+              {{ (auth.user?.name || 'A')[0] }}
+            </div>
+            <div class="hidden text-left leading-tight sm:block">
+              <div class="text-sm font-bold text-brand-950">{{ auth.user?.name }}</div>
+              <div class="text-xs text-gray-400">{{ auth.isAdmin ? 'Administrator' : 'Penulis' }}</div>
+            </div>
+            <AppIcon name="chevronDown" :size="16" class="hidden text-gray-400 sm:block" />
+          </button>
+
+          <div
+            v-if="userMenu"
+            class="absolute right-0 z-30 mt-2 w-60 overflow-hidden rounded-2xl border border-gray-100 bg-white py-1.5 shadow-2xl"
+          >
+            <div class="border-b border-gray-100 px-4 py-2.5">
+              <div class="truncate text-sm font-bold text-brand-950">{{ auth.user?.name }}</div>
+              <div class="truncate text-xs text-gray-400">{{ auth.user?.email }}</div>
+            </div>
+            <button class="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-brand-50" @click="goAccount">
+              <AppIcon name="userCog" :size="16" /> Pengaturan Akun
+            </button>
+            <button class="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50" @click="logout">
+              <AppIcon name="logout" :size="16" /> Keluar
+            </button>
           </div>
         </div>
       </header>

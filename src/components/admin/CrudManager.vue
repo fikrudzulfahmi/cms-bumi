@@ -34,7 +34,7 @@ function openCreate() {
   editing.value = null
   form.value = {}
   props.fields.forEach((f) => {
-    form.value[f.name] = f.type === 'boolean' ? true : ''
+    form.value[f.name] = f.type === 'boolean' ? true : (f.default ?? '')
   })
   showForm.value = true
 }
@@ -188,6 +188,15 @@ onMounted(load)
                 :placeholder="f.placeholder || (f.type === 'richtext' ? 'Boleh pakai HTML sederhana: <p>, <b>, <ul><li>' : '')"
                 class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
               ></textarea>
+
+              <input
+                v-else-if="f.type === 'password'"
+                v-model="form[f.name]"
+                type="password"
+                autocomplete="new-password"
+                placeholder="••••••••"
+                class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+              />
 
               <select
                 v-else-if="f.type === 'select'"

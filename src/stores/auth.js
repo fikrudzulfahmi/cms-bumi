@@ -9,6 +9,7 @@ export const useAuthStore = defineStore('auth', {
 
   getters: {
     isAuthenticated: (state) => !!state.token,
+    isAdmin: (state) => state.user?.role === 'admin',
   },
 
   actions: {
@@ -31,6 +32,14 @@ export const useAuthStore = defineStore('auth', {
         /* abaikan */
       }
       this.clear()
+    },
+
+    /** Ubah nama/email/password akun yang sedang login. */
+    async updateAccount(payload) {
+      const { data } = await api('/admin/akun', { method: 'PUT', body: payload })
+      this.user = data
+      localStorage.setItem('cms_user', JSON.stringify(data))
+      return data
     },
 
     clear() {

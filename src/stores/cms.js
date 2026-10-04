@@ -22,5 +22,11 @@ export const useCmsStore = defineStore('cms', {
       this.profile = p.data
       this.loaded = true
     },
+
+    /** Paksa ambil ulang (dipakai setelah admin menyimpan pengaturan). */
+    async reload() {
+      this.loaded = false
+      await this.load()
+    },
   },
 })

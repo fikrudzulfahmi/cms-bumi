@@ -51,6 +51,10 @@ onMounted(async () => {
         <h1 class="mt-4 text-3xl font-extrabold leading-tight text-brand-950 sm:text-4xl">{{ post.judul }}</h1>
         <div class="mt-3 flex items-center gap-1.5 text-sm text-gray-400">
           <AppIcon name="calendar" :size="15" /> {{ formatDate(post.tanggal) }}
+          <template v-if="post.author_name">
+            <span class="mx-1 text-gray-300">·</span>
+            <AppIcon name="users" :size="15" /> Oleh: {{ post.author_name }}
+          </template>
         </div>
       </div>
 
