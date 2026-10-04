@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
-import { api } from '@/services/api'
+import { api, assetUrl } from '@/services/api'
+import { applyFavicon } from '@/utils/favicon'
 
 export const useCmsStore = defineStore('cms', {
   state: () => ({
@@ -21,6 +22,8 @@ export const useCmsStore = defineStore('cms', {
       this.settings = s.data
       this.profile = p.data
       this.loaded = true
+      // Favicon mengikuti logo yang di-upload (Pengaturan → Logo)
+      applyFavicon(this.settings.logo ? assetUrl(this.settings.logo) : '')
     },
 
     /** Paksa ambil ulang (dipakai setelah admin menyimpan pengaturan). */

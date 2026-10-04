@@ -60,7 +60,7 @@ const tahun = new Date().getFullYear()
 
       <div class="mt-10 flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-brand-300/70 sm:flex-row">
         <span>© {{ tahun }} {{ cms.namaSekolah || "MA Bustanul Muta'allimin" }}. Hak cipta dilindungi.</span>
-        <span>by fikrudzulfahmi</span>
+        <span>by Bumi Production</span>
       </div>
     </div>
   </footer>

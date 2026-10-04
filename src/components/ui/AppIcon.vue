@@ -12,6 +12,7 @@ import {
   Music, HeartPulse, ShieldCheck, Search, Menu, ChevronRight, Info, CircleAlert,
   Plus, ListChecks, Eye, ExternalLink,
   ChevronDown, UserCog, KeyRound, ShieldUser,
+  Home,
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -78,6 +79,7 @@ const ICONS = {
   userCog: UserCog,
   key: KeyRound,
   shieldUser: ShieldUser,
+  home: Home,
 }
 
 const Comp = ICONS[props.name] || Sparkles

@@ -13,6 +13,8 @@ const routes = [
       { path: 'jurusan', name: 'jurusan', component: () => import('@/views/Jurusan.vue') },
       { path: 'jurusan/:slug', name: 'jurusan-detail', component: () => import('@/views/JurusanDetail.vue') },
       { path: 'layanan', name: 'layanan', component: () => import('@/views/Layanan.vue') },
+      // 404 di dalam layout publik → tetap ada navbar & footer
+      { path: ':pathMatch(.*)*', name: 'not-found', component: () => import('@/views/NotFound.vue') },
     ],
   },
   {
@@ -44,7 +46,6 @@ const routes = [
       },
     ],
   },
-  { path: '/:pathMatch(.*)*', redirect: '/' },
 ]
 
 const router = createRouter({
