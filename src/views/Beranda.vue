@@ -89,7 +89,7 @@ onMounted(async () => {
           </p>
 
           <div class="mt-8 flex flex-wrap gap-3">
-            <a href="#ppdb"
+            <a :href="cms.linkPpdb" target="_blank" rel="noopener"
               class="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-gold-500 to-gold-400 px-6 py-3.5 font-bold text-white shadow-lg shadow-gold-500/30 transition-transform hover:scale-[1.03]">
               <AppIcon name="clipboard" :size="18" /> Info Pendaftaran
             </a>
@@ -262,9 +262,13 @@ onMounted(async () => {
                 <div class="text-sm text-brand-100/80">Jam Operasional</div>
                 <div class="mt-1 text-lg font-bold text-white">{{ cms.settings.jam_operasional || '—' }}</div>
               </div>
-              <a :href="waLink" target="_blank" rel="noopener"
+              <a :href="cms.linkPpdb" target="_blank" rel="noopener"
                 class="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-gold-500 to-gold-400 px-6 py-4 text-lg font-extrabold text-white shadow-lg shadow-gold-500/30 transition-transform hover:scale-[1.02]">
-                <AppIcon name="chat" :size="20" /> Hubungi via WhatsApp
+                <AppIcon name="clipboard" :size="20" /> Daftar PPDB Online
+              </a>
+              <a :href="waLink" target="_blank" rel="noopener"
+                class="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-white/25 bg-white/10 px-6 py-3.5 text-base font-bold text-white backdrop-blur transition-colors hover:bg-white/20">
+                <AppIcon name="chat" :size="18" /> Hubungi via WhatsApp
               </a>
             </div>
           </div>

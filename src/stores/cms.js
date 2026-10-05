@@ -13,6 +13,8 @@ export const useCmsStore = defineStore('cms', {
     namaSekolah: (s) => s.settings.nama_sekolah || '',
     akronim: (s) => s.settings.akronim || 'BUMI',
     motto: (s) => s.settings.motto || '',
+    /** Tautan pendaftaran PPDB (diatur di Pengaturan, punya nilai bawaan). */
+    linkPpdb: (s) => s.settings.link_ppdb || 'https://psb.bustanulmutaallimin.com',
   },
 
   actions: {

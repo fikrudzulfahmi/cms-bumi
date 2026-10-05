@@ -47,6 +47,7 @@ const sections = [
     title: 'Informasi Pendaftaran (PPDB)',
     fields: [
       { key: 'informasi_pendaftaran', label: 'Informasi Pendaftaran (boleh HTML)', type: 'richtext' },
+      { key: 'link_ppdb', label: 'Link PPDB (tujuan tombol pendaftaran)', type: 'text' },
     ],
   },
   {

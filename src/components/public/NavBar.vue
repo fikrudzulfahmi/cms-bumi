@@ -53,7 +53,9 @@ function isActive(to) {
 
         <div class="flex items-center gap-2">
           <a
-            href="#ppdb"
+            :href="cms.linkPpdb"
+            target="_blank"
+            rel="noopener"
             class="hidden rounded-xl bg-gradient-to-r from-gold-500 to-gold-400 px-4 py-2 text-sm font-bold text-white shadow-md shadow-gold-500/30 transition-transform hover:scale-[1.03] sm:inline-flex"
           >
             Info PPDB
@@ -86,7 +88,7 @@ function isActive(to) {
           >
             {{ l.label }}
           </RouterLink>
-          <a href="#ppdb" @click="open = false"
+          <a :href="cms.linkPpdb" target="_blank" rel="noopener" @click="open = false"
             class="mt-2 block rounded-xl bg-gradient-to-r from-gold-500 to-gold-400 px-4 py-2.5 text-center text-sm font-bold text-white">
             Info PPDB
           </a>
