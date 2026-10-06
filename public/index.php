@@ -157,14 +157,17 @@ if ($jalur === '/sitemap.xml') {
 $pengaturan = api_get($konfig['api'].'/settings', 600)['data'] ?? [];
 $profil = api_get($konfig['api'].'/profil', 600)['data'] ?? [];
 
-$namaSitus = trim((string) ($pengaturan['nama_sekolah'] ?? "MA Bustanul Muta'allimin"));
-$moto = trim((string) ($pengaturan['motto'] ?? ''));
+// Rapikan spasi berlebih dari nilai pengaturan (mis. "MA  Bustanul" -> "MA Bustanul")
+$rapikan = fn (?string $s): string => trim((string) preg_replace('/\s+/', ' ', (string) $s));
+
+$namaSitus = $rapikan($pengaturan['nama_sekolah'] ?? '') ?: "MA Bustanul Muta'allimin";
+$moto = $rapikan($pengaturan['motto'] ?? '');
 $logo = (string) ($pengaturan['logo_url'] ?? '');
 $gambarSitus = $logo !== '' ? (str_starts_with($logo, 'http') ? $logo : $asal.$logo) : '';
 
 $judul = $namaSitus.($moto !== '' ? ' — '.$moto : '');
-$deskripsi = trim((string) ($pengaturan['deskripsi_singkat'] ?? ''))
-    ?: trim((string) ($profil['sejarah'] ?? ''));
+$deskripsi = $rapikan($pengaturan['deskripsi_singkat'] ?? '')
+    ?: $rapikan($profil['sejarah'] ?? '');
 $deskripsi = mb_substr(trim(preg_replace('/\s+/', ' ', strip_tags(html_entity_decode($deskripsi, ENT_QUOTES | ENT_HTML5, 'UTF-8')))), 0, 160);
 $tipe = 'website';
 $gambar = $gambarSitus;
