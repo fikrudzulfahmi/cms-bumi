@@ -3,6 +3,8 @@ import { ref, onMounted } from 'vue'
 import { api, assetUrl } from '@/services/api'
 import ImageUpload from './ImageUpload.vue'
 import RichText from './RichText.vue'
+import SeoAnalisis from './SeoAnalisis.vue'
+import BintangRating from '@/components/public/BintangRating.vue'
 import { formatDate, stripHtml } from '@/utils/format'
 import AppIcon from '@/components/ui/AppIcon.vue'
 
@@ -11,6 +13,10 @@ const props = defineProps({
   title: { type: String, required: true },
   fields: { type: Array, required: true },
   columns: { type: Array, required: true },
+  // Tampilkan analisis SEO di dalam formulir (dipakai form berita).
+  seo: { type: Boolean, default: false },
+  // Label kolom tambahan (mis. kolom statistik yang tidak ada di formulir).
+  labels: { type: Object, default: () => ({}) },
 })
 
 const items = ref([])
@@ -41,7 +47,13 @@ function openCreate() {
   editing.value = null
   form.value = {}
   props.fields.forEach((f) => {
-    form.value[f.name] = f.type === 'boolean' ? true : (f.default ?? '')
+    if (f.type === 'boolean') {
+      form.value[f.name] = true
+    } else if (f.type === 'select' && f.options && f.options.length) {
+      form.value[f.name] = f.options[0].value      // pilihan pertama, agar tidak kosong
+    } else {
+      form.value[f.name] = f.default ?? ''
+    }
   })
   showForm.value = true
 }
@@ -142,19 +154,20 @@ onMounted(load)
     </div>
 
     <!-- Tabel -->
-    <div class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+    <div class="overflow-x-auto rounded-2xl border border-gray-100 bg-white shadow-sm">
       <div v-if="loading" class="py-16 text-center text-gray-400">Memuat…</div>
       <table v-else class="w-full text-left text-sm">
         <thead class="bg-brand-50 text-xs uppercase tracking-wide text-brand-700">
           <tr>
-            <th v-for="c in columns" :key="c" class="px-4 py-3 font-bold">{{ (field(c) && field(c).label) || c }}</th>
+            <th v-for="c in columns" :key="c" class="px-4 py-3 font-bold">{{ labels[c] || (field(c) && field(c).label) || c }}</th>
             <th class="px-4 py-3 text-right font-bold">Aksi</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
           <tr v-for="item in items" :key="item.id" class="hover:bg-brand-50/40">
             <td v-for="c in columns" :key="c" class="px-4 py-3 align-middle text-gray-700">
-              <span v-if="field(c) && field(c).type === 'image'" v-html="display(item, c)"></span>
+              <BintangRating v-if="c === 'rating'" :nilai="item.rating || 0" :ukuran="13" />
+              <span v-else-if="field(c) && field(c).type === 'image'" v-html="display(item, c)"></span>
               <span v-else>{{ display(item, c) }}</span>
             </td>
             <td class="px-4 py-3 text-right">
@@ -239,6 +252,9 @@ onMounted(load)
               <ImageUpload v-else-if="f.type === 'image'" v-model="form[f.name]" :dir="f.dir || 'umum'" />
             </div>
           </template>
+
+          <!-- Analisis SEO (khusus form berita) -->
+          <SeoAnalisis v-if="seo" :form="form" />
         </div>
 
         <div class="mt-6 flex justify-end gap-3">

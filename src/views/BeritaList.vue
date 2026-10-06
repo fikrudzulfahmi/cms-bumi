@@ -1,18 +1,22 @@
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { api } from '@/services/api'
+import { useCmsStore } from '@/stores/cms'
 import PageHero from '@/components/public/PageHero.vue'
 import NewsCard from '@/components/public/NewsCard.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 
-const tabs = [
-  { key: 'berita', label: 'Berita' },
-  { key: 'pengumuman', label: 'Pengumuman' },
-  { key: 'prestasi', label: 'Prestasi' },
-  { key: 'umpan-balik', label: 'Umpan Balik' },
-]
+const cms = useCmsStore()
 
-const active = ref('berita')
+// Kategori diambil dari daftar yang diatur admin, jadi kategori baru
+// (mis. Cerpen) otomatis muncul sebagai tab.
+const tabs = computed(() => [
+  { key: '', label: 'Semua' },
+  ...cms.kategori.map((k) => ({ key: k.slug, label: k.nama })),
+  { key: 'umpan-balik', label: 'Umpan Balik' },
+])
+
+const active = ref('')
 const posts = ref([])
 const feedbacks = ref([])
 const loading = ref(false)
@@ -23,7 +27,7 @@ async function load() {
     if (active.value === 'umpan-balik') {
       feedbacks.value = (await api('/umpan-balik')).data
     } else {
-      posts.value = (await api(`/berita?kategori=${active.value}`)).data
+      posts.value = (await api(active.value ? `/berita?kategori=${active.value}` : '/berita')).data
     }
   } finally {
     loading.value = false

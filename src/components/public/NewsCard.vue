@@ -3,27 +3,19 @@ import { computed } from 'vue'
 import { RouterLink } from 'vue-router'
 import { assetUrl } from '@/services/api'
 import { formatDate, truncate } from '@/utils/format'
+import { warnaKategori } from '@/utils/kategori'
+import { useCmsStore } from '@/stores/cms'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import BintangRating from './BintangRating.vue'
 
 const props = defineProps({
   post: { type: Object, required: true },
 })
 
-const kategoriLabel = computed(() => {
-  switch (props.post.kategori) {
-    case 'pengumuman': return 'Pengumuman'
-    case 'prestasi': return 'Prestasi'
-    default: return 'Berita'
-  }
-})
+const cms = useCmsStore()
 
-const kategoriColor = computed(() => {
-  switch (props.post.kategori) {
-    case 'pengumuman': return 'bg-amber-100 text-amber-700'
-    case 'prestasi': return 'bg-gold-100 text-gold-700'
-    default: return 'bg-brand-100 text-brand-700'
-  }
-})
+const kategoriLabel = computed(() => cms.namaKategori(props.post.kategori))
+const kategoriColor = computed(() => warnaKategori(props.post.kategori))
 </script>
 
 <template>
@@ -58,6 +50,16 @@ const kategoriColor = computed(() => {
         {{ post.judul }}
       </h3>
       <p class="mt-2 line-clamp-2 text-sm leading-relaxed text-gray-500">{{ truncate(post.ringkasan || post.konten, 140) }}</p>
+
+      <div class="mt-3 flex items-center justify-between gap-2 border-t border-gray-100 pt-3">
+        <BintangRating :nilai="post.rating" :ukuran="14" />
+        <span class="flex items-center gap-1.5 text-xs font-semibold text-gray-400">
+          <AppIcon name="eye" :size="14" /> {{ (post.views || 0).toLocaleString('id-ID') }}
+          <span class="text-gray-300">·</span>
+          <AppIcon name="heart" :size="14" /> {{ post.jumlah_like || 0 }}
+        </span>
+      </div>
+
       <span class="mt-3 inline-flex items-center gap-1 text-sm font-bold text-gold-600">
         Baca selengkapnya
         <AppIcon name="arrowRight" :size="16" class="transition-transform group-hover:translate-x-1" />

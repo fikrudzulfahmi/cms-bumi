@@ -3,28 +3,35 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, RouterLink } from 'vue-router'
 import { api } from '@/services/api'
 import { formatDate } from '@/utils/format'
+import { useCmsStore } from '@/stores/cms'
 import NewsCard from '@/components/public/NewsCard.vue'
+import InteraksiBerita from '@/components/public/InteraksiBerita.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 
 const route = useRoute()
+const cms = useCmsStore()
 const post = ref(null)
 const terkait = ref([])
 const notFound = ref(false)
+const views = ref(0)
 
-const kategoriLabel = computed(() => {
-  if (!post.value) return ''
-  switch (post.value.kategori) {
-    case 'pengumuman': return 'Pengumuman'
-    case 'prestasi': return 'Prestasi'
-    default: return 'Berita'
-  }
-})
+// Kategori bisa ditambah admin, jadi namanya diambil dari daftar kategori.
+const kategoriLabel = computed(() => (post.value ? cms.namaKategori(post.value.kategori) : ''))
 
 onMounted(async () => {
   try {
     post.value = (await api(`/berita/${route.params.slug}`)).data
+    views.value = post.value.views || 0
+
     terkait.value = (await api(`/berita?kategori=${post.value.kategori}&limit=3`)).data
       .filter((p) => p.id !== post.value.id)
+
+    // Catat kunjungan — server hanya menghitung sekali per pengunjung per hari.
+    api(`/berita/${post.value.slug}/view`, { method: 'POST' })
+      .then((res) => {
+        views.value = res.data.views
+      })
+      .catch(() => {})
   } catch {
     notFound.value = true
   }
@@ -62,9 +69,12 @@ onMounted(async () => {
 
       <div class="prose-cms mt-8 text-[17px] leading-relaxed text-gray-700" v-html="post.konten || post.ringkasan"></div>
 
-      <div class="mt-12 border-t border-gray-100 pt-8">
+      <!-- Pengunjung, rating, suka/tidak suka, dan komentar -->
+      <InteraksiBerita :slug="post.slug" :views="views" />
+
+      <div v-if="terkait.length" class="mt-12 border-t border-gray-100 pt-8">
         <h3 class="mb-5 text-lg font-extrabold text-brand-950">Berita lainnya</h3>
-        <div v-if="terkait.length" class="flex flex-wrap gap-6">
+        <div class="flex flex-wrap gap-6">
           <NewsCard v-for="p in terkait" :key="p.id" :post="p" class="w-auto" />
         </div>
       </div>

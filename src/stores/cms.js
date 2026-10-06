@@ -6,6 +6,7 @@ export const useCmsStore = defineStore('cms', {
   state: () => ({
     settings: {},
     profile: null,
+    kategori: [],
     loaded: false,
   }),
 
@@ -15,6 +16,12 @@ export const useCmsStore = defineStore('cms', {
     motto: (s) => s.settings.motto || '',
     /** Tautan pendaftaran PPDB (diatur di Pengaturan, punya nilai bawaan). */
     linkPpdb: (s) => s.settings.link_ppdb || 'https://psb.bustanulmutaallimin.com',
+
+    /** Nama kategori dari slug — mendukung kategori yang ditambahkan admin. */
+    namaKategori: (s) => (slug) => {
+      const k = s.kategori.find((x) => x.slug === slug)
+      return k ? k.nama : (slug ? slug.charAt(0).toUpperCase() + slug.slice(1) : '')
+    },
   },
 
   actions: {
@@ -23,6 +30,11 @@ export const useCmsStore = defineStore('cms', {
       const [s, p] = await Promise.all([api('/settings'), api('/profil')])
       this.settings = s.data
       this.profile = p.data
+      try {
+        this.kategori = (await api('/kategori')).data || []
+      } catch {
+        this.kategori = []
+      }
       this.loaded = true
       // Favicon mengikuti logo yang di-upload (Pengaturan → Logo)
       applyFavicon(this.settings.logo ? assetUrl(this.settings.logo) : '')

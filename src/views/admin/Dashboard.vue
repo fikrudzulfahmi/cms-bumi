@@ -5,10 +5,12 @@ import { api } from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 import { waktuRelatif, jamMenit } from '@/utils/format'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import BintangRating from '@/components/public/BintangRating.vue'
 
 const auth = useAuthStore()
 const counts = ref({})
 const stat = ref(null)
+const berita = ref(null)
 
 // adminOnly = hanya tampil untuk peran 'admin'
 const allCards = [
@@ -36,6 +38,7 @@ const EVENT = {
   rute_tidak_ditemukan: { label: 'Alamat ditebak', ikon: 'search', kelas: 'bg-amber-100 text-amber-700' },
   error_server: { label: 'Error server', ikon: 'alert', kelas: 'bg-red-100 text-red-600' },
   ekspor_log: { label: 'Ekspor log', ikon: 'download', kelas: 'bg-amber-100 text-amber-700' },
+  komentar_baru: { label: 'Komentar', ikon: 'chat', kelas: 'bg-sky-100 text-sky-700' },
 }
 const ev = (kode) => EVENT[kode] || { label: kode, ikon: 'activity', kelas: 'bg-gray-100 text-gray-600' }
 
@@ -72,12 +75,17 @@ onMounted(async () => {
   )
   counts.value = Object.fromEntries(entries)
 
-  // Statistik aktivitas hanya untuk admin (penulis tidak berhak melihat log).
+  // Statistik aktivitas & analisis berita hanya untuk admin.
   if (auth.isAdmin) {
     try {
       stat.value = (await api('/admin/log-aktivitas/statistik?hari=30')).data
     } catch {
       stat.value = null
+    }
+    try {
+      berita.value = (await api('/admin/berita/analitik')).data
+    } catch {
+      berita.value = null
     }
   }
 })
@@ -94,6 +102,86 @@ onMounted(async () => {
         {{ auth.isAdmin ? 'Kelola seluruh konten website madrasah dari satu tempat.' : 'Kelola berita dan pengumuman madrasah.' }}
       </p>
     </div>
+
+    <!-- Rekap konten website (paling atas) -->
+    <section>
+      <h3 class="mb-3 text-lg font-extrabold text-brand-950">Rekap Konten Website</h3>
+      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <RouterLink v-for="c in cards" :key="c.key" :to="c.to"
+          class="group rounded-3xl bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
+          <div class="mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br text-white" :class="c.color">
+            <AppIcon :name="c.icon" :size="24" />
+          </div>
+          <div class="text-3xl font-extrabold text-brand-950">{{ counts[c.key] ?? '—' }}</div>
+          <div class="text-sm font-semibold text-gray-500">{{ c.label }}</div>
+        </RouterLink>
+      </div>
+    </section>
+
+    <!-- Analisis berita + 5 terpopuler (admin) -->
+    <section v-if="auth.isAdmin && berita" class="grid gap-4 lg:grid-cols-2">
+      <div class="rounded-2xl bg-white p-5 shadow-sm">
+        <h3 class="mb-4 flex items-center gap-2 font-extrabold text-brand-950">
+          <AppIcon name="newspaper" :size="18" /> Performa Berita
+        </h3>
+
+        <div class="grid gap-3 sm:grid-cols-3">
+          <div class="rounded-xl bg-sky-50 p-3">
+            <div class="text-2xl font-extrabold text-sky-700">{{ berita.total.pengunjung.toLocaleString('id-ID') }}</div>
+            <div class="text-[11px] font-semibold text-sky-600">Total pengunjung</div>
+          </div>
+          <div class="rounded-xl bg-emerald-50 p-3">
+            <div class="text-2xl font-extrabold text-emerald-700">{{ berita.total.like }}</div>
+            <div class="text-[11px] font-semibold text-emerald-600">Suka</div>
+          </div>
+          <div class="rounded-xl bg-red-50 p-3">
+            <div class="text-2xl font-extrabold text-red-600">{{ berita.total.dislike }}</div>
+            <div class="text-[11px] font-semibold text-red-500">Tidak suka</div>
+          </div>
+        </div>
+
+        <div class="mt-3 grid gap-3 sm:grid-cols-3">
+          <div class="rounded-xl bg-violet-50 p-3">
+            <div class="text-2xl font-extrabold text-violet-700">{{ berita.total.komentar }}</div>
+            <div class="text-[11px] font-semibold text-violet-600">Komentar tampil</div>
+          </div>
+          <div class="rounded-xl bg-gold-50 p-3">
+            <div class="text-2xl font-extrabold text-gold-700">{{ berita.total.rating_rata }}</div>
+            <BintangRating :nilai="berita.total.rating_rata" :ukuran="12" :tampilkan-angka="false" />
+          </div>
+          <div class="rounded-xl bg-gray-50 p-3">
+            <div class="text-2xl font-extrabold text-gray-700">{{ berita.total.terbit }}<span class="text-sm text-gray-400">/{{ berita.total.berita }}</span></div>
+            <div class="text-[11px] font-semibold text-gray-500">Berita terbit</div>
+          </div>
+        </div>
+
+        <p v-if="berita.total.komentar_menunggu > 0" class="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-xs font-semibold text-amber-700">
+          {{ berita.total.komentar_menunggu }} komentar menunggu persetujuan —
+          <RouterLink to="/admin/komentar" class="underline">buka moderasi</RouterLink>
+        </p>
+      </div>
+
+      <div class="rounded-2xl bg-white p-5 shadow-sm">
+        <h3 class="mb-4 flex items-center gap-2 font-extrabold text-brand-950">
+          <AppIcon name="star" :size="18" /> 5 Berita Terpopuler
+        </h3>
+        <p v-if="!berita.terpopuler.length" class="py-6 text-center text-sm text-gray-400">Belum ada data pengunjung.</p>
+        <ul v-else class="space-y-2.5">
+          <li v-for="(p, i) in berita.terpopuler" :key="p.id" class="flex items-center gap-3">
+            <span class="grid h-7 w-7 shrink-0 place-items-center rounded-lg bg-brand-50 text-xs font-extrabold text-brand-700">{{ i + 1 }}</span>
+            <span class="min-w-0 flex-1">
+              <RouterLink :to="`/berita/${p.slug}`" target="_blank" class="block truncate text-sm font-semibold text-gray-700 hover:text-brand-600">
+                {{ p.judul }}
+              </RouterLink>
+              <span class="text-xs text-gray-400">
+                {{ p.views.toLocaleString('id-ID') }} pengunjung · {{ p.jumlah_like }} suka · {{ p.jumlah_komentar }} komentar
+              </span>
+            </span>
+            <BintangRating :nilai="p.rating" :ukuran="13" />
+          </li>
+        </ul>
+      </div>
+    </section>
 
     <!-- Pemantauan aktivitas (admin) -->
     <section v-if="auth.isAdmin">
@@ -117,7 +205,7 @@ onMounted(async () => {
       </div>
     </section>
 
-    <!-- Aktivitas terbaru + rekap per jenis -->
+    <!-- Aktivitas terbaru + rekap perubahan -->
     <section v-if="auth.isAdmin" class="grid gap-4 lg:grid-cols-3">
       <div class="rounded-2xl bg-white p-5 shadow-sm lg:col-span-2">
         <h3 class="mb-4 font-extrabold text-brand-950">Aktivitas Terbaru</h3>
@@ -145,7 +233,6 @@ onMounted(async () => {
       </div>
 
       <div class="space-y-4">
-        <!-- Rekap 30 hari -->
         <div class="rounded-2xl bg-white p-5 shadow-sm">
           <h3 class="mb-1 font-extrabold text-brand-950">Perubahan Konten</h3>
           <p class="mb-4 text-xs text-gray-400">{{ stat?.rentang_hari ?? 30 }} hari terakhir</p>
@@ -188,7 +275,6 @@ onMounted(async () => {
           </table>
         </div>
 
-        <!-- Keutuhan log -->
         <div class="rounded-2xl p-5 shadow-sm"
           :class="stat?.rantai?.ok === false ? 'bg-red-50 ring-2 ring-red-200' : 'bg-white'">
           <h3 class="mb-1 flex items-center gap-2 font-extrabold text-brand-950">
@@ -199,7 +285,7 @@ onMounted(async () => {
             <p class="text-sm font-bold" :class="stat.rantai.ok ? 'text-emerald-700' : 'text-red-600'">
               {{ stat.rantai.ok ? 'Rantai utuh — tidak ada manipulasi' : `Rantai RUSAK di baris #${stat.rantai.rusak_di}` }}
             </p>
-            <p class="mt-1 text-xs text-gray-400">{{ stat.rantai.jumlah ?? stat.rantai.total ?? 0 }} baris terverifikasi</p>
+            <p class="mt-1 text-xs text-gray-400">{{ stat.rantai.total ?? 0 }} baris terverifikasi</p>
           </template>
         </div>
       </div>
@@ -216,21 +302,6 @@ onMounted(async () => {
             :style="{ height: Math.max(3, (h.jumlah / maksHarian) * 88) + 'px' }"></div>
           <span class="text-[10px] text-gray-400">{{ hariTeks(h.tanggal) }}</span>
         </div>
-      </div>
-    </section>
-
-    <!-- Konten -->
-    <section>
-      <h3 class="mb-3 text-lg font-extrabold text-brand-950">Konten Website</h3>
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        <RouterLink v-for="c in cards" :key="c.key" :to="c.to"
-          class="group rounded-3xl bg-white p-5 shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
-          <div class="mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br text-white" :class="c.color">
-            <AppIcon :name="c.icon" :size="24" />
-          </div>
-          <div class="text-3xl font-extrabold text-brand-950">{{ counts[c.key] ?? '—' }}</div>
-          <div class="text-sm font-semibold text-gray-500">{{ c.label }}</div>
-        </RouterLink>
       </div>
     </section>
   </div>

@@ -15,6 +15,8 @@ const userMenu = ref(false) // dropdown akun
 const menus = [
   { label: 'Dashboard', to: '/admin', icon: 'dashboard', adminOnly: false },
   { label: 'Berita', to: '/admin/berita', icon: 'newspaper', adminOnly: false },
+  { label: 'Kategori Berita', to: '/admin/kategori', icon: 'listChecks', adminOnly: true },
+  { label: 'Komentar', to: '/admin/komentar', icon: 'chat', adminOnly: true },
   { label: 'Pengaturan', to: '/admin/pengaturan', icon: 'settings', adminOnly: true },
   { label: 'Profil Sekolah', to: '/admin/profil', icon: 'school', adminOnly: true },
   { label: 'Guru & Karyawan', to: '/admin/guru', icon: 'users', adminOnly: true },
