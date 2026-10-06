@@ -261,6 +261,158 @@ $jsonLd[] = array_filter([
     ])),
 ]);
 
+// ------------------------------------------------- ISI HALAMAN DI DALAM HTML
+/**
+ * Menyusun isi halaman versi HTML biasa (bukan hasil JavaScript).
+ *
+ * Aplikasi ini SPA: HTML aslinya hanya kerangka kosong, sehingga crawler yang tidak
+ * menjalankan JavaScript (WhatsApp, Facebook, Bing versi lama, perkakas AI, pengarsip)
+ * hanya membaca meta tanpa isi. Blok ini menyuntikkan isi yang sama ke dalam
+ * `<div id="app">` — dikirim ke SEMUA pengunjung, bukan hanya bot, jadi bukan
+ * penyamaran. Saat aplikasi Vue hidup, blok ini digantikan tampilan interaktifnya.
+ */
+function susun_konten(string $jalur, ?array $artikel, string $nama, string $moto, string $asal, array $konfig, array $pengaturan = []): string
+{
+    $bersih_teks = fn (?string $s): string => trim((string) preg_replace('/\s+/', ' ', strip_tags(html_entity_decode((string) $s, ENT_QUOTES | ENT_HTML5, 'UTF-8'))));
+    $potong = fn (?string $s, int $n): string => mb_substr($bersih_teks($s), 0, $n);
+    $url = fn (?string $g): string => $g ? (str_starts_with($g, 'http') ? $g : $asal.$g) : '';
+
+    $b = [];
+    $tgl = fn (?string $t): string => $t ? date('j F Y', strtotime($t)) : '';
+
+    if ($jalur === '/') {
+        $profil = api_get($konfig['api'].'/profil', 600)['data'] ?? [];
+        $b[] = '<h1>'.e($nama).($moto !== '' ? ' — '.e($moto) : '').'</h1>';
+        $ringkas = $potong($profil['sejarah'] ?? '', 500);
+        if ($ringkas !== '') {
+            $b[] = '<p>'.e($ringkas).'</p>';
+        }
+        $berita = api_get($konfig['api'].'/berita?limit=6', 300)['data'] ?? [];
+        if ($berita) {
+            $b[] = '<h2>Berita Terbaru</h2><ul>';
+            foreach ($berita as $p) {
+                $b[] = '<li><a href="/berita/'.e($p['slug']).'">'.e($p['judul']).'</a>'
+                    .' <small>'.e($tgl($p['tanggal'] ?? null)).'</small>'
+                    .($potong($p['ringkasan'] ?? '', 160) !== '' ? '<br><small>'.e($potong($p['ringkasan'] ?? '', 160)).'</small>' : '')
+                    .'</li>';
+            }
+            $b[] = '</ul><p><a href="/berita">Lihat semua berita</a></p>';
+        }
+    } elseif ($jalur === '/berita') {
+        $b[] = '<h1>Berita &amp; Pengumuman '.e($nama).'</h1>';
+        $berita = api_get($konfig['api'].'/berita?limit=12', 300)['data'] ?? [];
+        if ($berita) {
+            $b[] = '<ul>';
+            foreach ($berita as $p) {
+                $b[] = '<li><a href="/berita/'.e($p['slug']).'">'.e($p['judul']).'</a>'
+                    .' <small>'.e($tgl($p['tanggal'] ?? null)).'</small>'
+                    .($potong($p['ringkasan'] ?? '', 200) !== '' ? '<br><small>'.e($potong($p['ringkasan'] ?? '', 200)).'</small>' : '')
+                    .'</li>';
+            }
+            $b[] = '</ul>';
+        }
+    } elseif (is_array($artikel)) {
+        // Halaman berita: inilah yang dicari orang di Google.
+        $b[] = '<h1>'.e($artikel['judul'] ?? '').'</h1>';
+        $info = array_filter([
+            $tgl($artikel['tanggal'] ?? null),
+            ! empty($artikel['author_name']) ? 'Oleh: '.$artikel['author_name'] : '',
+            ((int) ($artikel['views'] ?? 0)) > 0 ? ((int) $artikel['views']).' pengunjung' : '',
+        ]);
+        if ($info) {
+            $b[] = '<p><small>'.e(implode(' · ', $info)).'</small></p>';
+        }
+        if (! empty($artikel['gambar_url'])) {
+            $b[] = '<img src="'.e($url($artikel['gambar_url'])).'" alt="'.e($artikel['judul'] ?? '').'" width="900" height="600">';
+        }
+        // Isi artikel apa adanya (ditulis admin lewat editor), tag berisiko dibuang.
+        $isi = (string) ($artikel['konten'] ?? '');
+        $isi = preg_replace('#<(script|style|iframe|object|embed)[^>]*>.*?</\1>#is', '', $isi) ?? '';
+        $isi = preg_replace('#<(script|style|iframe|object|embed)[^>]*/?>#is', '', $isi) ?? '';
+        if (trim(strip_tags($isi)) === '') {
+            $isi = '<p>'.e($potong($artikel['ringkasan'] ?? '', 400)).'</p>';
+        }
+        $b[] = $isi;
+
+        $lain = api_get($konfig['api'].'/berita?limit=6', 300)['data'] ?? [];
+        $lain = array_values(array_filter($lain, fn ($p) => ($p['slug'] ?? '') !== ($artikel['slug'] ?? '')));
+        if ($lain) {
+            $b[] = '<h2>Berita Lainnya</h2><ul>';
+            foreach (array_slice($lain, 0, 5) as $p) {
+                $b[] = '<li><a href="/berita/'.e($p['slug']).'">'.e($p['judul']).'</a></li>';
+            }
+            $b[] = '</ul>';
+        }
+    } elseif ($jalur === '/jurusan') {
+        $b[] = '<h1>Jurusan di '.e($nama).'</h1>';
+        $jurusan = api_get($konfig['api'].'/jurusan', 600)['data'] ?? [];
+        if ($jurusan) {
+            $b[] = '<ul>';
+            foreach ($jurusan as $j) {
+                $b[] = '<li><a href="/jurusan/'.e($j['slug']).'">'.e($j['nama']).'</a>'
+                    .($potong($j['deskripsi'] ?? '', 160) !== '' ? '<br><small>'.e($potong($j['deskripsi'] ?? '', 160)).'</small>' : '').'</li>';
+            }
+            $b[] = '</ul>';
+        }
+    } elseif (preg_match('#^/jurusan/([a-z0-9\-]+)$#', $jalur, $c)) {
+        $j = api_get($konfig['api'].'/jurusan/'.rawurlencode($c[1]), 600)['data'] ?? null;
+        if (is_array($j)) {
+            $b[] = '<h1>'.e($j['nama'] ?? '').'</h1>';
+            $isi = (string) ($j['deskripsi'] ?? '');
+            $b[] = preg_replace('#<(script|style|iframe|object|embed)[^>]*>.*?</\1>#is', '', $isi) ?: '<p>'.e($potong($isi, 400)).'</p>';
+            $b[] = '<p><a href="/jurusan">Lihat semua jurusan</a></p>';
+        }
+    } elseif ($jalur === '/layanan') {
+        $b[] = '<h1>Layanan &amp; Fasilitas '.e($nama).'</h1>';
+        $fasilitas = api_get($konfig['api'].'/fasilitas', 600)['data'] ?? [];
+        if ($fasilitas) {
+            $b[] = '<ul>';
+            foreach ($fasilitas as $f) {
+                $b[] = '<li><strong>'.e($f['nama'] ?? '').'</strong>'
+                    .($potong($f['deskripsi'] ?? '', 200) !== '' ? ' — '.e($potong($f['deskripsi'] ?? '', 200)) : '').'</li>';
+            }
+            $b[] = '</ul>';
+        }
+    } elseif ($jalur === '/kontak') {
+        $b[] = '<h1>Kontak '.e($nama).'</h1>';
+        $kontak = array_filter([
+            $potong($pengaturan['alamat'] ?? '', 200),
+            $potong($pengaturan['telepon'] ?? '', 60),
+            $potong($pengaturan['email'] ?? '', 120),
+        ]);
+        if ($kontak) {
+            $b[] = '<ul><li>'.implode('</li><li>', array_map('e', $kontak)).'</li></ul>';
+        }
+    } elseif ($jalur === '/profil') {
+        $profil = api_get($konfig['api'].'/profil', 600)['data'] ?? [];
+        $b[] = '<h1>Profil '.e($nama).'</h1>';
+        foreach (['sejarah' => 'Sejarah', 'visi' => 'Visi', 'misi' => 'Misi'] as $kolom => $label) {
+            $t = (string) ($profil[$kolom] ?? '');
+            $t = preg_replace('#<(script|style)[^>]*>.*?</\1>#is', '', $t) ?? '';
+            if (trim(strip_tags($t)) !== '') {
+                $b[] = '<h2>'.$label.'</h2>'.$t;
+            }
+        }
+    }
+
+    if (! $b) {
+        return '';
+    }
+
+    // Gaya mandiri: blok ini tampil sekejap sebelum aplikasi Vue menggantinya.
+    $gaya = '<style>'
+        .'#app>.seo-html{max-width:56rem;margin:0 auto;padding:2rem 1rem;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#334155;line-height:1.7}'
+        .'#app>.seo-html h1{font-size:1.9rem;line-height:1.25;margin:0 0 1rem;color:#1e293b}'
+        .'#app>.seo-html h2{font-size:1.25rem;margin:1.75rem 0 .6rem;color:#1e293b}'
+        .'#app>.seo-html img{max-width:100%;height:auto;border-radius:1rem;margin:1rem 0}'
+        .'#app>.seo-html ul{padding-left:1.25rem}'
+        .'#app>.seo-html a{color:#0f766e}'
+        .'#app>.seo-html small{color:#64748b}'
+        .'</style>';
+
+    return $gaya.'<div class="seo-html">'.implode("\n", $b).'</div>';
+}
+
 // ------------------------------------------------------------- susun <head>
 $meta = [];
 $meta[] = '<title>'.e($judul).'</title>';
@@ -314,6 +466,13 @@ if (str_contains($html, '<!--SEO-->')) {
     $html = str_replace('<!--SEO-->', $sisipan, $html);
 } else {
     $html = str_replace('</head>', $sisipan."\n  </head>", $html);
+}
+
+// Sisipkan isi halaman ke dalam #app: crawler tanpa JavaScript ikut membaca isinya,
+// dan pengunjung melihat isi lebih cepat. Vue menggantinya saat aplikasi hidup.
+$konten = susun_konten($jalur, $artikel, $namaSitus, $moto, $asal, $konfig, is_array($pengaturan) ? $pengaturan : []);
+if ($konten !== '' && preg_match('#<div id="app">\s*</div>#i', $html)) {
+    $html = preg_replace('#<div id="app">\s*</div>#i', '<div id="app">'.$konten.'</div>', $html, 1);
 }
 
 header('Content-Type: text/html; charset=utf-8');
