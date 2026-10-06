@@ -14,6 +14,8 @@ import {
   ChevronDown, UserCog, KeyRound, ShieldUser,
   Home,
   Lock, Download,
+  Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, AlignJustify,
+  ListOrdered, List, Eraser,
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -83,6 +85,16 @@ const ICONS = {
   home: Home,
   lock: Lock,
   download: Download,
+  bold: Bold,
+  italic: Italic,
+  underline: Underline,
+  alignLeft: AlignLeft,
+  alignCenter: AlignCenter,
+  alignRight: AlignRight,
+  alignJustify: AlignJustify,
+  listOrdered: ListOrdered,
+  list: List,
+  eraser: Eraser,
 }
 
 const Comp = ICONS[props.name] || Sparkles

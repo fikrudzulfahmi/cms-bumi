@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { api } from '@/services/api'
 import ImageUpload from '@/components/admin/ImageUpload.vue'
+import RichText from '@/components/admin/RichText.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import { useCmsStore } from '@/stores/cms'
 
@@ -46,7 +47,7 @@ const sections = [
   {
     title: 'Informasi Pendaftaran (PPDB)',
     fields: [
-      { key: 'informasi_pendaftaran', label: 'Informasi Pendaftaran (boleh HTML)', type: 'richtext' },
+      { key: 'informasi_pendaftaran', label: 'Informasi Pendaftaran', type: 'richtext' },
       { key: 'link_ppdb', label: 'Link PPDB (tujuan tombol pendaftaran)', type: 'text' },
     ],
   },
@@ -105,10 +106,15 @@ async function save() {
         <div class="grid gap-4 sm:grid-cols-2">
           <div v-for="f in s.fields" :key="f.key" :class="f.type === 'richtext' || f.type === 'textarea' ? 'sm:col-span-2' : ''">
             <label class="mb-1.5 block text-sm font-semibold text-gray-700">{{ f.label }}</label>
-            <textarea
-              v-if="f.type === 'textarea' || f.type === 'richtext'"
+            <RichText
+              v-if="f.type === 'richtext'"
               v-model="form[f.key]"
-              :rows="f.type === 'richtext' ? 8 : 3"
+              :placeholder="'Tulis di sini. Pakai tombol di atas untuk menebalkan, memiringkan, mengatur perataan, atau membuat daftar bernomor.'"
+            />
+            <textarea
+              v-else-if="f.type === 'textarea'"
+              v-model="form[f.key]"
+              :rows="3"
               class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
             ></textarea>
             <input

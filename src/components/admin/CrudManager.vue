@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { api, assetUrl } from '@/services/api'
 import ImageUpload from './ImageUpload.vue'
+import RichText from './RichText.vue'
 import { formatDate, stripHtml } from '@/utils/format'
 import AppIcon from '@/components/ui/AppIcon.vue'
 
@@ -19,12 +20,18 @@ const editing = ref(null)
 const form = ref({})
 const saving = ref(false)
 const search = ref('')
+const error = ref('')
 
 async function load() {
   loading.value = true
+  error.value = ''
   try {
     const res = await api(`/admin/${props.endpoint}`)
     items.value = res.data || []
+  } catch (e) {
+    // Tanpa ini, kegagalan API (mis. sesi habis) hanya jadi tabel kosong.
+    error.value = e.message || 'Gagal memuat data.'
+    items.value = []
   } finally {
     loading.value = false
   }
@@ -115,11 +122,23 @@ onMounted(load)
         <p class="text-sm text-gray-500">Kelola data {{ title.toLowerCase() }} madrasah.</p>
       </div>
       <button
-        class="rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-brand-600/25 transition-transform hover:scale-[1.03]"
+        class="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-brand-600/25 transition-transform hover:scale-[1.03]"
         @click="openCreate"
       >
         <AppIcon name="plus" :size="16" /> Tambah
       </button>
+    </div>
+
+    <!-- Peringatan bila data gagal dimuat -->
+    <div
+      v-if="error"
+      class="mb-4 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800"
+    >
+      <AppIcon name="alert" :size="16" class="mt-0.5 shrink-0" />
+      <span>
+        {{ error }}
+        <button class="ml-1 font-bold underline" @click="load">Coba lagi</button>
+      </span>
     </div>
 
     <!-- Tabel -->
@@ -181,11 +200,17 @@ onMounted(load)
                 class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
               />
 
-              <textarea
-                v-else-if="f.type === 'textarea' || f.type === 'richtext'"
+              <RichText
+                v-else-if="f.type === 'richtext'"
                 v-model="form[f.name]"
-                :rows="f.type === 'richtext' ? 8 : 4"
-                :placeholder="f.placeholder || (f.type === 'richtext' ? 'Boleh pakai HTML sederhana: <p>, <b>, <ul><li>' : '')"
+                :placeholder="f.placeholder || 'Tulis di sini. Pakai tombol di atas untuk menebalkan, memiringkan, mengatur perataan, atau membuat daftar bernomor.'"
+              />
+
+              <textarea
+                v-else-if="f.type === 'textarea'"
+                v-model="form[f.name]"
+                :rows="4"
+                :placeholder="f.placeholder || ''"
                 class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
               ></textarea>
 
