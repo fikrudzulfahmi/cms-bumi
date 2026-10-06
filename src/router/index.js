@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useCmsStore } from '@/stores/cms'
 
 const routes = [
   {
@@ -77,6 +78,28 @@ router.beforeEach((to) => {
   if (to.meta.adminOnly && !auth.isAdmin) {
     return { name: 'admin-dashboard' }
   }
+})
+
+// Judul tab diselaraskan setiap pindah halaman. Meta versi SERVER (public/index.php)
+// yang dibaca crawler; ini menjaga nilai yang sama saat pengunjung menelusuri
+// di dalam aplikasi, sehingga Google yang menjalankan JS pun tidak kembali ke
+// judul generik.
+const JUDUL_RUTE = {
+  beranda: 'Beranda',
+  profil: 'Profil Sekolah',
+  berita: 'Berita & Pengumuman',
+  jurusan: 'Jurusan',
+  'jurusan-detail': 'Jurusan',
+  layanan: 'Layanan',
+  kontak: 'Kontak',
+  'admin-login': 'Masuk Panel',
+}
+
+router.afterEach((to) => {
+  if (to.name === 'berita-detail') return // halaman berita menyetel sendiri (judul SEO)
+  const nama = useCmsStore().namaSekolah || "MA Bustanul Muta'allimin"
+  const label = JUDUL_RUTE[to.name]
+  document.title = label ? `${label} | ${nama}` : nama
 })
 
 export default router

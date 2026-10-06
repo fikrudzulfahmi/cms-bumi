@@ -25,6 +25,33 @@ jobs:
         env:
           VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
 
+      # Front controller PHP (dist/index.php) butuh tahu alamat API untuk menyusun
+      # meta SEO. Nilainya diambil dari secret supaya domain tidak ikut ke repo publik.
+      # 'situs' sengaja dikosongkan: front controller memakai domain dari permintaan.
+      - name: Tulis konfigurasi SEO
+        env:
+          VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
+        run: |
+          set -uo pipefail
+          API="${VITE_API_BASE_URL:-}"
+          if [ -z "$API" ]; then
+            echo "::warning title=SEO::VITE_API_BASE_URL kosong — front controller memakai alamat pengembangan"
+          fi
+          {
+            echo '<?php'
+            echo '// Dibuat otomatis saat deploy. Jangan disunting di server.'
+            echo 'return ['
+            echo "  'api' => '${API}',"
+            echo "  'situs' => '',"
+            echo '];'
+          } > dist/seo.config.php
+          if [ -f dist/index.php ]; then
+            echo "::notice title=SEO FRONT CONTROLLER::index.php siap, api=[${API}]"
+          else
+            echo "::error title=SEO FRONT CONTROLLER HILANG::dist/index.php tidak ada — pastikan ada di folder public/"
+          fi
+          ls -la dist/ | grep -E "index.php|htaccess|seo.config" | sed 's/^/  /'
+
       - name: SSH key + Deploy
         env:
           SSH_HOST: ${{ secrets.SSH_HOST }}

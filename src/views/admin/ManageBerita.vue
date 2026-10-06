@@ -25,6 +25,18 @@ const fields = computed(() => [
   { name: 'tanggal', label: 'Tanggal', type: 'date' },
   { name: 'gambar', label: 'Gambar', type: 'image', dir: 'berita' },
   { name: 'ringkasan', label: 'Ringkasan', type: 'textarea' },
+  // SEO ala Yoast: judul & deskripsi yang dibaca Google/WhatsApp bisa diatur terpisah.
+  {
+    name: 'meta_judul',
+    label: 'Judul SEO — tampil di hasil Google & tab browser (kosongkan untuk memakai judul berita)',
+    type: 'text',
+  },
+  {
+    name: 'meta_deskripsi',
+    label: 'Deskripsi Meta — kalimat pembuka di hasil Google (idealnya 120–160 karakter)',
+    type: 'textarea',
+  },
+  { name: 'kata_kunci', label: 'Kata Kunci Utama — yang ingin dicari orang di Google', type: 'text' },
   { name: 'konten', label: 'Isi Berita', type: 'richtext' },
   { name: 'is_published', label: 'Publikasikan', type: 'boolean' },
 ])

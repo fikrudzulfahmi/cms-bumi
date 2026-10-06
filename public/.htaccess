@@ -2,14 +2,24 @@
     RewriteEngine On
     RewriteBase /
 
-    # Jangan rewrite file/folder yang benar-benar ada
+    # "/" harus lewat front controller agar meta SEO tersusun
+    RewriteRule ^$ index.php [L]
+
+    # Jangan biarkan index.html mentah diakses langsung (tanpa meta SEO)
+    RewriteRule ^index\.html$ / [R=301,L]
+
+    # Berkas/folder yang benar-benar ada dilayani langsung (aset, gambar, favicon)
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
     RewriteRule ^ - [L]
 
-    # Semua rute lain diarahkan ke index.html (SPA history mode)
-    RewriteRule ^ index.html [L]
+    # Semua rute lain -> front controller (menyusun meta SEO, lalu mengirim SPA).
+    # robots.txt & sitemap.xml juga dilayani dari sini.
+    RewriteRule ^ index.php [L]
 </IfModule>
+
+# Pastikan front controller yang dipakai untuk direktori
+DirectoryIndex index.php index.html
 
 # Cache aset ber-hash
 <IfModule mod_expires.c>
@@ -21,10 +31,3 @@
     ExpiresByType image/jpeg "access plus 1 year"
     ExpiresByType image/webp "access plus 1 year"
 </IfModule>
-
-# Jangan cache index.html (biar update langsung terlihat)
-<FilesMatch "index\.html$">
-    <IfModule mod_headers.c>
-        Header set Cache-Control "no-cache, no-store, must-revalidate"
-    </IfModule>
-</FilesMatch>

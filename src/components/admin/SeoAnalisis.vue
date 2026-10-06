@@ -1,13 +1,14 @@
 <script setup>
 /**
- * Analisis SEO untuk berita — dihitung langsung di browser saat admin menulis,
- * jadi hasilnya langsung terlihat tanpa perlu menyimpan dulu.
+ * Analisis SEO untuk berita — gaya Yoast: menilai JUDUL SEO & DESKRIPSI META
+ * (bukan sekadar judul berita), karena itulah yang dibaca Google.
  *
- * Yang diperiksa mengikuti kebiasaan alat SEO populer (Yoast/Rank Math):
- * panjang judul, ringkasan (meta description), panjang isi, kata kunci,
- * gambar, sub-judul, tautan, dan struktur daftar.
+ * Bila kolom Judul SEO / Deskripsi Meta dikosongkan, penilaian memakai
+ * judul berita & ringkasan sebagai cadangan — sama seperti perilaku Yoast.
+ * Semua perhitungan berjalan di browser, jadi hasilnya langsung terlihat
+ * tanpa perlu menyimpan dulu.
  */
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { stripHtml } from '@/utils/format'
 import AppIcon from '@/components/ui/AppIcon.vue'
 
@@ -15,19 +16,41 @@ const props = defineProps({
   form: { type: Object, required: true },
 })
 
-const kataKunci = ref('')
-
 const teks = (html) => stripHtml(html || '')
+
+// Kata kunci melekat pada field formulir supaya ikut tersimpan ke server.
+const kataKunci = computed({
+  get: () => props.form.kata_kunci || '',
+  set: (v) => {
+    props.form.kata_kunci = v
+  },
+})
+
+const judulBerita = computed(() => teks(props.form.judul))
+const ringkasanBerita = computed(() => teks(props.form.ringkasan))
+const kontenHtml = computed(() => String(props.form.konten || ''))
+
+// Nilai EFEKTIF yang benar-benar dipakai halaman (lihat index.php).
+const judulSeo = computed(() => (props.form.meta_judul || '').trim() || judulBerita.value)
+const deskripsiMeta = computed(() => (props.form.meta_deskripsi || '').trim() || ringkasanBerita.value)
+
+const pakaiJudulKhusus = computed(() => !!(props.form.meta_judul || '').trim())
+const pakaiDeskripsiKhusus = computed(() => !!(props.form.meta_deskripsi || '').trim())
 
 const jumlahKata = computed(() => {
   const t = teks(props.form.konten).trim()
   return t ? t.split(/\s+/).length : 0
 })
 
-const ringkasan = computed(() => teks(props.form.ringkasan))
-const judul = computed(() => teks(props.form.judul))
+/** URL ramalan dari judul (untuk menilai kata kunci di slug). */
+const slugEfektif = computed(() => {
+  const sumber = (props.form.slug || '').trim() || props.form.judul || ''
+  return String(sumber)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+})
 
-/** Cari kemunculan kata kunci (mengabaikan besar-kecil huruf). */
 function mengandung(teksnya, kunci) {
   if (!kunci) return false
   return String(teksnya || '').toLowerCase().includes(kunci.toLowerCase())
@@ -39,28 +62,27 @@ function hitungKemunculan(teksnya, kunci) {
   return (String(teksnya || '').match(pola) || []).length
 }
 
-const kontenHtml = computed(() => String(props.form.konten || ''))
-
 const pemeriksaan = computed(() => {
   const k = kataKunci.value.trim()
   const daftar = []
-
   const tambah = (label, lulus, tips) => daftar.push({ label, lulus, tips })
 
-  // 1. Judul
+  // 1. Panjang judul SEO (yang dibaca Google)
+  const pj = judulSeo.value.length
   tambah(
-    `Judul ${judul.value.length} karakter (idealnya 40–60)`,
-    judul.value.length >= 40 && judul.value.length <= 60,
-    judul.value.length < 40
-      ? 'Judul terlalu pendek — tambahkan keterangan agar lebih jelas di hasil pencarian.'
-      : 'Judul terlalu panjang — Google memotongnya di sekitar 60 karakter.'
+    `Judul SEO: ${pj} karakter (idealnya 40–60)`,
+    pj >= 40 && pj <= 60,
+    pj < 40
+      ? 'Terlalu pendek — tambahkan keterangan agar jelas di hasil pencarian.'
+      : 'Terlalu panjang — Google memotongnya sekitar 60 karakter.'
   )
 
-  // 2. Kata kunci di judul
+  // 2. Kata kunci (bila diisi)
   if (k) {
-    tambah(`Kata kunci "${k}" ada di judul`, mengandung(judul.value, k), 'Sisipkan kata kunci utama pada judul.')
-    tambah('Kata kunci ada di ringkasan', mengandung(ringkasan.value, k), 'Sebut kata kunci di ringkasan/meta description.')
+    tambah(`Kata kunci "${k}" ada di judul SEO`, mengandung(judulSeo.value, k), 'Sisipkan kata kunci utama pada Judul SEO.')
+    tambah('Kata kunci ada di deskripsi meta', mengandung(deskripsiMeta.value, k), 'Sebut kata kunci pada Deskripsi Meta.')
     tambah('Kata kunci ada di isi berita', mengandung(teks(kontenHtml.value), k), 'Gunakan kata kunci secara wajar di dalam isi.')
+    tambah('Kata kunci ada di URL (slug)', mengandung(slugEfektif.value, k), 'Sertakan kata kunci pada judul agar masuk ke URL.')
     const muncul = hitungKemunculan(teks(kontenHtml.value), k)
     tambah(
       `Kepadatan kata kunci wajar (${muncul}× kemunculan)`,
@@ -69,40 +91,27 @@ const pemeriksaan = computed(() => {
     )
   }
 
-  // 3. Ringkasan / meta description
+  // 3. Panjang deskripsi meta
+  const pd = deskripsiMeta.value.length
   tambah(
-    `Ringkasan ${ringkasan.value.length} karakter (idealnya 120–160)`,
-    ringkasan.value.length >= 120 && ringkasan.value.length <= 160,
-    ringkasan.value.length < 120
-      ? 'Ringkasan terlalu pendek — tulis 120–160 karakter agar menarik diklik.'
-      : 'Ringkasan terlalu panjang — Google memotongnya di sekitar 160 karakter.'
+    `Deskripsi meta: ${pd} karakter (idealnya 120–160)`,
+    pd >= 120 && pd <= 160,
+    pd === 0
+      ? 'Belum ada deskripsi — tulislah 120–160 karakter yang mengundang orang mengklik.'
+      : pd < 120
+        ? 'Terlalu pendek — tambahkan sampai 120–160 karakter.'
+        : 'Terlalu panjang — Google memotongnya sekitar 160 karakter.'
   )
 
   // 4. Panjang isi
-  tambah(
-    `Isi ${jumlahKata.value} kata (minimal 300)`,
-    jumlahKata.value >= 300,
-    'Berita yang lebih lengkap (minimal 300 kata) lebih mudah menempati peringkat.'
-  )
+  tambah(`Isi ${jumlahKata.value} kata (minimal 300)`, jumlahKata.value >= 300, 'Berita yang lengkap lebih mudah menempati peringkat.')
 
-  // 5. Gambar
-  tambah('Ada gambar utama', !!(props.form.gambar || '').trim(), 'Tambahkan gambar — berita bergambar lebih sering diklik.')
+  // 5. Gambar (dipakai og:image saat dibagikan ke WhatsApp)
+  tambah('Ada gambar utama', !!(props.form.gambar || '').trim(), 'Gambar muncul sebagai pratinjau saat tautan dibagikan di WhatsApp.')
 
-  // 6. Sub-judul (h2/h3)
-  tambah(
-    'Isi punya sub-judul (Heading 2/3)',
-    /<h[23][\s>]/i.test(kontenHtml.value),
-    'Pecah isi dengan sub-judul agar mudah dibaca mesin pencari.'
-  )
-
-  // 7. Tautan
-  tambah(
-    'Ada tautan keluar/masuk',
-    /<a\s[^>]*href=/i.test(kontenHtml.value),
-    'Tautan ke sumber lain menambah kepercayaan (E-E-A-T).'
-  )
-
-  // 8. Daftar
+  // 6–8. Struktur isi
+  tambah('Isi punya sub-judul (Heading 2/3)', /<h[23][\s>]/i.test(kontenHtml.value), 'Pecah isi dengan sub-judul agar mudah dibaca mesin pencari.')
+  tambah('Ada tautan keluar/masuk', /<a\s[^>]*href=/i.test(kontenHtml.value), 'Tautan ke sumber lain menambah kepercayaan (E-E-A-T).')
   tambah('Ada daftar bernomor/titik', /<(ul|ol)[\s>]/i.test(kontenHtml.value), 'Daftar membuat informasi lebih mudah dipindai.')
 
   return daftar
@@ -120,11 +129,13 @@ const warnaSkor = computed(() => {
   return { teks: 'text-red-600', bg: 'bg-red-50', label: 'Perlu diperbaiki' }
 })
 
-/** Contoh tampilan di hasil pencarian Google. */
+// Contoh tampilan di hasil pencarian Google (memakai nilai efektif).
 const pratinjau = computed(() => ({
-  judul: judul.value || 'Judul berita',
-  url: `bumi.sch.id › berita › ${(props.form.slug || props.form.judul || 'judul').toString().toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 40)}`,
-  deskripsi: ringkasan.value || 'Ringkasan berita akan tampil di sini sebagai keterangan di hasil pencarian Google.',
+  url: `ma-bumi.sch.id › berita › ${slugEfektif.value.slice(0, 42) || 'judul-berita'}`,
+  judul: judulSeo.value || 'Judul berita',
+  deskripsi:
+    deskripsiMeta.value ||
+    'Deskripsi meta akan tampil di sini sebagai keterangan di hasil pencarian Google.',
 }))
 </script>
 
@@ -146,8 +157,18 @@ const pratinjau = computed(() => ({
       v-model="kataKunci"
       type="text"
       placeholder="mis. pendaftaran siswa baru"
-      class="mb-4 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+      class="mb-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
     />
+    <p class="mb-4 text-[11px] text-gray-500">
+      Judul SEO:
+      <strong :class="pakaiJudulKhusus ? 'text-brand-700' : 'text-gray-500'">
+        {{ pakaiJudulKhusus ? 'dari kolom Judul SEO' : 'memakai judul berita' }}
+      </strong>
+      · Deskripsi:
+      <strong :class="pakaiDeskripsiKhusus ? 'text-brand-700' : 'text-gray-500'">
+        {{ pakaiDeskripsiKhusus ? 'dari kolom Deskripsi Meta' : 'memakai ringkasan berita' }}
+      </strong>
+    </p>
 
     <!-- Hasil pemeriksaan -->
     <ul class="mb-4 space-y-1.5">
@@ -167,7 +188,9 @@ const pratinjau = computed(() => ({
 
     <!-- Pratinjau di Google -->
     <div class="rounded-xl border border-gray-200 bg-white p-3">
-      <p class="mb-1 text-[11px] font-bold uppercase tracking-wide text-gray-400">Pratinjau di Google</p>
+      <p class="mb-1 text-[11px] font-bold uppercase tracking-wide text-gray-400">
+        Pratinjau di Google <span class="text-gray-300">·</span> begini juga tampilannya saat dibagikan ke WhatsApp
+      </p>
       <p class="text-xs text-emerald-700">{{ pratinjau.url }}</p>
       <p class="text-base font-medium leading-snug text-blue-700">{{ pratinjau.judul }}</p>
       <p class="text-xs leading-snug text-gray-600">{{ pratinjau.deskripsi }}</p>

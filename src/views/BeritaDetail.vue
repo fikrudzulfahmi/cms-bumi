@@ -4,6 +4,7 @@ import { useRoute, RouterLink } from 'vue-router'
 import { api } from '@/services/api'
 import { formatDate } from '@/utils/format'
 import { useCmsStore } from '@/stores/cms'
+import { setOpenGraph } from '@/utils/seo'
 import NewsCard from '@/components/public/NewsCard.vue'
 import InteraksiBerita from '@/components/public/InteraksiBerita.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
@@ -22,6 +23,14 @@ onMounted(async () => {
   try {
     post.value = (await api(`/berita/${route.params.slug}`)).data
     views.value = post.value.views || 0
+
+    // Selaraskan judul & meta dengan nilai SEO berita (judul SEO menimpa judul berita).
+    const nama = cms.namaSekolah || "MA Bustanul Muta'allimin"
+    setOpenGraph({
+      judul: (post.value.meta_judul || '').trim() || `${post.value.judul} | ${nama}`,
+      deskripsi: post.value.seo_deskripsi || post.value.ringkasan || '',
+      gambar: post.value.gambar_url || '',
+    })
 
     terkait.value = (await api(`/berita?kategori=${post.value.kategori}&limit=3`)).data
       .filter((p) => p.id !== post.value.id)

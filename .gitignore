@@ -42,3 +42,6 @@ __screenshots__/
 
 # Vite
 *.timestamp-*-*.mjs
+
+# Konfigurasi SEO (dibuat saat deploy dari secret, memuat alamat API & domain)
+public/seo.config.php
