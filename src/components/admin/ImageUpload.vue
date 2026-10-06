@@ -11,19 +11,92 @@ const emit = defineEmits(['update:modelValue'])
 
 const uploading = ref(false)
 const input = ref(null)
+const catatan = ref('')
+
+/** Ukuran maksimal yang kita izinkan sesudah dikompres (sama dengan batas server: 12 MB). */
+const BATAS_MAKS = 12 * 1024 * 1024
+/** Sisi terpanjang gambar hasil kompresi. */
+const SISI_MAKS = 2000
+/** Kalau berkas sudah lebih kecil dari ini, tidak perlu dikompres. */
+const AMBANG_KECIL = 800 * 1024
+
+/**
+ * Kecilkan foto di browser SEBELUM dikirim.
+ *
+ * Foto kamera HP biasanya 3-8 MB, sedangkan batas PHP di hosting (default
+ * cPanel) hanya 2 MB — itulah sebab "sebagian foto gagal diunggah".
+ * Setelah dikecilkan ke sisi 2000 px + JPEG 88%, foto 8 MB menjadi ±400 KB
+ * sehingga selalu lolos dan tampilannya di web tetap tajam.
+ */
+async function kompres(file) {
+  // Format yang tidak bisa digambar ke canvas (mis. GIF animasi, SVG) dilewatkan apa adanya.
+  if (!/^image\/(jpeg|png|webp)$/i.test(file.type)) return { file, dikompres: false }
+  if (file.size <= AMBANG_KECIL) return { file, dikompres: false }
+
+  const gambar = await new Promise((selesai, gagal) => {
+    const img = new Image()
+    img.onload = () => selesai(img)
+    img.onerror = () => gagal(new Error('gagal membaca gambar'))
+    img.src = URL.createObjectURL(file)
+  }).catch(() => null)
+
+  if (!gambar) return { file, dikompres: false }
+
+  const skala = Math.min(1, SISI_MAKS / Math.max(gambar.width, gambar.height))
+  // Sudah kecil dimensinya DAN ukurannya? tidak perlu digambar ulang.
+  if (skala === 1 && file.size <= AMBANG_KECIL) {
+    URL.revokeObjectURL(gambar.src)
+    return { file, dikompres: false }
+  }
+
+  const lebar = Math.round(gambar.width * skala)
+  const tinggi = Math.round(gambar.height * skala)
+  const canvas = document.createElement('canvas')
+  canvas.width = lebar
+  canvas.height = tinggi
+  canvas.getContext('2d').drawImage(gambar, 0, 0, lebar, tinggi)
+  URL.revokeObjectURL(gambar.src)
+
+  const blob = await new Promise((selesai) => canvas.toBlob(selesai, 'image/jpeg', 0.88))
+  // Kalau hasilnya justru lebih besar, pakai berkas asli.
+  if (!blob || blob.size >= file.size) return { file, dikompres: false }
+
+  const nama = file.name.replace(/\.[^.]+$/, '') + '.jpg'
+  return { file: new File([blob], nama, { type: 'image/jpeg' }), dikompres: true }
+}
+
+function ukuranTeks(bytes) {
+  return bytes >= 1024 * 1024
+    ? (bytes / 1024 / 1024).toFixed(1) + ' MB'
+    : Math.round(bytes / 1024) + ' KB'
+}
 
 async function onFile(e) {
-  const file = e.target.files && e.target.files[0]
-  if (!file) return
+  const asli = e.target.files && e.target.files[0]
+  if (!asli) return
+
   uploading.value = true
+  catatan.value = ''
   try {
+    const { file, dikompres } = await kompres(asli)
+
+    if (file.size > BATAS_MAKS) {
+      throw new Error(
+        `Gambar terlalu besar (${ukuranTeks(file.size)}). Maksimal ${ukuranTeks(BATAS_MAKS)} — mohon kecilkan dulu.`
+      )
+    }
+
     const fd = new FormData()
     fd.append('file', file)
     fd.append('dir', props.dir)
     const res = await api('/admin/upload', { method: 'POST', body: fd, isForm: true })
     emit('update:modelValue', res.data.path)
+
+    if (dikompres) {
+      catatan.value = `Gambar dikecilkan otomatis: ${ukuranTeks(asli.size)} → ${ukuranTeks(file.size)}`
+    }
   } catch (err) {
-    alert(err.message)
+    alert(err.message || 'Gagal mengunggah gambar.')
   } finally {
     uploading.value = false
     if (input.value) input.value.value = ''
@@ -48,7 +121,11 @@ async function onFile(e) {
           <AppIcon name="upload" :size="16" />
           {{ uploading ? 'Mengunggah…' : 'Unggah Gambar' }}
         </button>
-        <input ref="input" type="file" accept="image/*" class="hidden" @change="onFile" />
+        <input ref="input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" class="hidden" @change="onFile" />
+        <p v-if="catatan" class="text-xs font-medium text-green-600">{{ catatan }}</p>
+        <p class="text-[11px] leading-snug text-gray-400">
+          Foto dari HP otomatis dikecilkan supaya cepat terunggah. Maksimal 12 MB.
+        </p>
         <button
           v-if="modelValue"
           type="button"
