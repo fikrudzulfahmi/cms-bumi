@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { api } from '@/services/api'
 import AppIcon from '@/components/ui/AppIcon.vue'
+import RichText from '@/components/admin/RichText.vue'
 
 const form = ref({ sejarah: '', visi: '', misi: '' })
 const saving = ref(false)
@@ -48,22 +49,29 @@ async function save() {
     <div class="space-y-6">
       <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <label class="mb-1.5 block text-sm font-semibold text-gray-700">Sejarah</label>
-        <p class="mb-2 text-xs text-gray-400">Boleh pakai HTML: &lt;p&gt;, &lt;b&gt;, &lt;ul&gt;&lt;li&gt;</p>
-        <textarea v-model="form.sejarah" rows="10"
-          class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"></textarea>
+        <RichText
+          v-model="form.sejarah"
+          :min-height="240"
+          placeholder="Tulis sejarah madrasah di sini. Pakai tombol di atas untuk menebalkan, mengatur perataan, atau membuat daftar bernomor."
+        />
       </div>
 
       <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <label class="mb-1.5 block text-sm font-semibold text-gray-700">Visi</label>
-        <textarea v-model="form.visi" rows="3"
-          class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"></textarea>
+        <RichText
+          v-model="form.visi"
+          :min-height="110"
+          placeholder="Tulis visi madrasah."
+        />
       </div>
 
       <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <label class="mb-1.5 block text-sm font-semibold text-gray-700">Misi</label>
-        <p class="mb-2 text-xs text-gray-400">Boleh pakai HTML: &lt;ul&gt;&lt;li&gt;…&lt;/li&gt;&lt;/ul&gt;</p>
-        <textarea v-model="form.misi" rows="8"
-          class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"></textarea>
+        <RichText
+          v-model="form.misi"
+          :min-height="190"
+          placeholder="Tulis misi madrasah. Gunakan tombol penomoran titik atau angka untuk membuat daftar."
+        />
       </div>
     </div>
   </div>
