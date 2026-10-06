@@ -128,6 +128,15 @@ onMounted(() => {
             <span class="text-xs text-gray-400">· {{ waktuRelatif(k.created_at) }}</span>
           </div>
           <p class="pl-10 text-sm leading-relaxed text-gray-600">{{ k.isi }}</p>
+
+          <!-- Balasan dari penulis/pengelola berita -->
+          <div v-if="k.balasan" class="ml-10 mt-2 rounded-xl border-l-4 border-brand-400 bg-brand-50/70 px-3 py-2">
+            <p class="flex flex-wrap items-center gap-1.5 text-xs font-bold text-brand-700">
+              <AppIcon name="chat" :size="12" /> {{ k.balasan_oleh || 'Pengelola' }}
+              <span class="font-normal text-gray-400">· {{ waktuRelatif(k.balasan_at) }}</span>
+            </p>
+            <p class="mt-0.5 text-sm leading-relaxed text-gray-700">{{ k.balasan }}</p>
+          </div>
         </li>
       </ul>
 

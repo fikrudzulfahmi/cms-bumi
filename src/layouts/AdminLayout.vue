@@ -1,7 +1,9 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { watch } from 'vue'
 import { RouterLink, useRoute, RouterView, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useKomentarStore } from '@/stores/komentar'
 import LogoMark from '@/components/public/LogoMark.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 
@@ -10,13 +12,14 @@ const route = useRoute()
 const router = useRouter()
 const open = ref(false) // sidebar mobile
 const userMenu = ref(false) // dropdown akun
+const komentar = useKomentarStore() // badge jumlah komentar menunggu
 
 // adminOnly = hanya terlihat untuk peran 'admin'
 const menus = [
   { label: 'Dashboard', to: '/admin', icon: 'dashboard', adminOnly: false },
   { label: 'Berita', to: '/admin/berita', icon: 'newspaper', adminOnly: false },
   { label: 'Kategori Berita', to: '/admin/kategori', icon: 'listChecks', adminOnly: true },
-  { label: 'Komentar', to: '/admin/komentar', icon: 'chat', adminOnly: true },
+  { label: 'Komentar', to: '/admin/komentar', icon: 'chat', adminOnly: false },
   { label: 'Pengaturan', to: '/admin/pengaturan', icon: 'settings', adminOnly: true },
   { label: 'Profil Sekolah', to: '/admin/profil', icon: 'school', adminOnly: true },
   { label: 'Guru & Karyawan', to: '/admin/guru', icon: 'users', adminOnly: true },
@@ -53,6 +56,11 @@ function onDocClick(e) {
 
 onMounted(() => document.addEventListener('click', onDocClick))
 onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
+
+// Badge komentar menunggu — supaya penulis tahu ada komentar baru tanpa harus
+// membuka halamannya. Disimpan di store agar ikut menyegar setelah membalas.
+watch(() => route.path, () => komentar.refresh())
+onMounted(() => komentar.refresh())
 </script>
 
 <template>
@@ -79,7 +87,15 @@ onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
           :class="route.path === m.to ? 'bg-brand-600 text-white' : 'text-brand-200 hover:bg-white/10 hover:text-white'"
           @click="open = false"
         >
-          <AppIcon :name="m.icon" :size="18" />{{ m.label }}
+          <AppIcon :name="m.icon" :size="18" />
+          <span class="flex-1">{{ m.label }}</span>
+          <span
+            v-if="m.to === '/admin/komentar' && komentar.menunggu > 0"
+            class="grid h-5 min-w-5 place-items-center rounded-full bg-amber-400 px-1.5 text-[11px] font-extrabold text-brand-950"
+            :title="`${komentar.menunggu} komentar menunggu persetujuan`"
+          >
+            {{ komentar.menunggu }}
+          </span>
         </RouterLink>
       </nav>
 
