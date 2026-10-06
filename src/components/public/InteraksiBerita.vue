@@ -1,7 +1,12 @@
 <script setup>
 /**
  * Blok interaksi pembaca pada sebuah berita:
- * jumlah pengunjung, rating bintang, tombol suka/tidak suka, dan komentar.
+ * jumlah pengunjung, rating bintang, tombol suka/tidak suka, dan komentar
+ * berjenjang — pengunjung boleh saling membalas, begitu juga pengelola.
+ *
+ * Balasan selalu tampil menjorok di bawah komentar utamanya (maksimal 2 tingkat).
+ * Membalas sebuah balasan tetap ditempel di komentar utama dan menyapa pemiliknya
+ * lewat "@Nama".
  */
 import { ref, onMounted } from 'vue'
 import { api } from '@/services/api'
@@ -20,6 +25,11 @@ const form = ref({ nama: '', email: '', isi: '' })
 const mengirim = ref(false)
 const pesan = ref('')
 const galat = ref('')
+
+// Balasan: { id, nama } sasaran yang sedang dibalas
+const sasaran = ref(null)
+const isiBalasan = ref('')
+const mengirimBalasan = ref(false)
 
 async function muat() {
   try {
@@ -44,6 +54,10 @@ async function pilih(tipe) {
   }
 }
 
+function ingatNama() {
+  if (form.value.nama.trim()) localStorage.setItem('cms_nama_komentar', form.value.nama.trim())
+}
+
 async function kirimKomentar() {
   galat.value = ''
   pesan.value = ''
@@ -52,11 +66,37 @@ async function kirimKomentar() {
     const res = await api(`/berita/${props.slug}/komentar`, { method: 'POST', body: form.value })
     pesan.value = res.message || 'Komentar terkirim.'
     form.value.isi = ''
-    localStorage.setItem('cms_nama_komentar', form.value.nama)
+    ingatNama()
   } catch (e) {
     galat.value = e.message || 'Komentar gagal dikirim.'
   } finally {
     mengirim.value = false
+  }
+}
+
+function bukaBalasan(k) {
+  sasaran.value = sasaran.value?.id === k.id ? null : { id: k.id, nama: k.nama }
+  isiBalasan.value = ''
+  galat.value = ''
+}
+
+async function kirimBalasan(k) {
+  galat.value = ''
+  pesan.value = ''
+  mengirimBalasan.value = true
+  try {
+    const res = await api(`/berita/${props.slug}/komentar`, {
+      method: 'POST',
+      body: { nama: form.value.nama, isi: isiBalasan.value, parent_id: k.id },
+    })
+    pesan.value = res.message || 'Balasan terkirim.'
+    sasaran.value = null
+    isiBalasan.value = ''
+    ingatNama()
+  } catch (e) {
+    galat.value = e.message || 'Balasan gagal dikirim.'
+  } finally {
+    mengirimBalasan.value = false
   }
 }
 
@@ -118,9 +158,10 @@ onMounted(() => {
         Belum ada komentar. Jadilah yang pertama.
       </p>
 
-      <ul v-else class="space-y-3">
+      <ul v-else class="space-y-4">
         <li v-for="k in komentar" :key="k.id" class="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
-          <div class="mb-1 flex items-center gap-2 text-sm">
+          <!-- Komentar utama -->
+          <div class="mb-1 flex flex-wrap items-center gap-2 text-sm">
             <span class="grid h-8 w-8 place-items-center rounded-full bg-brand-100 font-bold text-brand-700">
               {{ (k.nama || '?').charAt(0).toUpperCase() }}
             </span>
@@ -129,18 +170,100 @@ onMounted(() => {
           </div>
           <p class="pl-10 text-sm leading-relaxed text-gray-600">{{ k.isi }}</p>
 
-          <!-- Balasan dari penulis/pengelola berita -->
-          <div v-if="k.balasan" class="ml-10 mt-2 rounded-xl border-l-4 border-brand-400 bg-brand-50/70 px-3 py-2">
-            <p class="flex flex-wrap items-center gap-1.5 text-xs font-bold text-brand-700">
-              <AppIcon name="chat" :size="12" /> {{ k.balasan_oleh || 'Pengelola' }}
-              <span class="font-normal text-gray-400">· {{ waktuRelatif(k.balasan_at) }}</span>
-            </p>
-            <p class="mt-0.5 text-sm leading-relaxed text-gray-700">{{ k.balasan }}</p>
+          <!-- Balasan (pengunjung & pengelola) -->
+          <ul v-if="k.children && k.children.length" class="mt-3 space-y-2 pl-6 sm:pl-10">
+            <li
+              v-for="b in k.children" :key="b.id"
+              class="rounded-xl border-l-4 bg-gray-50/80 px-3 py-2"
+              :class="b.is_pengelola ? 'border-brand-500 bg-brand-50/70' : 'border-gray-300'"
+            >
+              <div class="mb-0.5 flex flex-wrap items-center gap-2 text-xs">
+                <span class="grid h-6 w-6 place-items-center rounded-full bg-white font-bold text-brand-700 ring-1 ring-gray-200">
+                  {{ (b.nama || '?').charAt(0).toUpperCase() }}
+                </span>
+                <span class="font-bold text-brand-950">{{ b.nama }}</span>
+                <span
+                  v-if="b.is_pengelola"
+                  class="rounded-full bg-brand-600 px-2 py-0.5 text-[10px] font-bold text-white"
+                >
+                  Pengelola
+                </span>
+                <span v-if="b.balas_ke" class="text-gray-400">membalas <strong class="text-brand-700">@{{ b.balas_ke }}</strong></span>
+                <span class="text-gray-400">· {{ waktuRelatif(b.created_at) }}</span>
+              </div>
+              <p class="pl-8 text-sm leading-relaxed text-gray-600">{{ b.isi }}</p>
+              <div class="pl-8">
+                <button
+                  type="button"
+                  class="mt-1 text-xs font-bold text-brand-600 hover:underline"
+                  @click="bukaBalasan(b)"
+                >
+                  Balas
+                </button>
+              </div>
+
+              <!-- Form balas untuk balasan ini -->
+              <div v-if="sasaran && sasaran.id === b.id" class="mt-2 pl-8">
+                <input
+                  v-model="form.nama" maxlength="80" :placeholder="`Nama Anda (wajib) — balas ${b.nama}`"
+                  class="mb-1.5 w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                />
+                <textarea
+                  v-model="isiBalasan" rows="2" maxlength="1500"
+                  :placeholder="`Balas ${b.nama}…`"
+                  class="w-full rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+                ></textarea>
+                <div class="mt-1.5 flex items-center justify-end gap-2">
+                  <button type="button" class="rounded-lg px-3 py-1.5 text-xs font-bold text-gray-500 hover:bg-gray-100" @click="sasaran = null">
+                    Batal
+                  </button>
+                  <button
+                    type="button" :disabled="mengirimBalasan || isiBalasan.trim().length < 5 || !form.nama.trim()"
+                    class="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-700 disabled:opacity-40"
+                    @click="kirimBalasan(b)"
+                  >
+                    {{ mengirimBalasan ? 'Mengirim…' : 'Kirim Balasan' }}
+                  </button>
+                </div>
+              </div>
+            </li>
+          </ul>
+
+          <!-- Tombol balas komentar utama -->
+          <div class="mt-2 pl-10">
+            <button type="button" class="text-xs font-bold text-brand-600 hover:underline" @click="bukaBalasan(k)">
+              Balas
+            </button>
+          </div>
+
+          <!-- Form balas komentar utama -->
+          <div v-if="sasaran && sasaran.id === k.id" class="mt-2 pl-6 sm:pl-10">
+            <input
+              v-model="form.nama" maxlength="80" :placeholder="`Nama Anda (wajib) — balas ${k.nama}`"
+              class="mb-1.5 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+            />
+            <textarea
+              v-model="isiBalasan" rows="2" maxlength="1500"
+              :placeholder="`Balas ${k.nama}…`"
+              class="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+            ></textarea>
+            <div class="mt-1.5 flex items-center justify-end gap-2">
+              <button type="button" class="rounded-lg px-3 py-1.5 text-xs font-bold text-gray-500 hover:bg-gray-100" @click="sasaran = null">
+                Batal
+              </button>
+              <button
+                type="button" :disabled="mengirimBalasan || isiBalasan.trim().length < 5 || !form.nama.trim()"
+                class="rounded-lg bg-brand-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-brand-700 disabled:opacity-40"
+                @click="kirimBalasan(k)"
+              >
+                {{ mengirimBalasan ? 'Mengirim…' : 'Kirim Balasan' }}
+              </button>
+            </div>
           </div>
         </li>
       </ul>
 
-      <!-- Form komentar -->
+      <!-- Form komentar baru -->
       <form class="mt-6 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm" @submit.prevent="kirimKomentar">
         <h4 class="mb-3 font-extrabold text-brand-950">Tulis Komentar</h4>
 
@@ -162,7 +285,7 @@ onMounted(() => {
         ></textarea>
 
         <div class="mt-3 flex flex-wrap items-center justify-between gap-3">
-          <p class="text-xs text-gray-400">Komentar tampil setelah disetujui pengelola.</p>
+          <p class="text-xs text-gray-400">Komentar &amp; balasan tampil setelah disetujui pengelola.</p>
           <button
             type="submit" :disabled="mengirim"
             class="inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-brand-600/25 transition-transform hover:scale-[1.03] disabled:opacity-50"

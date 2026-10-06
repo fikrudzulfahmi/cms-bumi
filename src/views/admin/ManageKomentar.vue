@@ -1,4 +1,13 @@
 <script setup>
+/**
+ * Moderasi komentar & balasan berita.
+ *
+ * Admin melihat semua; penulis hanya yang ada di berita miliknya.
+ * Yang tampil di sini adalah komentar DAN balasan (termasuk balasan antar
+ * pengunjung), dan keduanya bisa diubah isinya, disetujui/disembunyikan,
+ * atau dihapus bila tidak pantas. Menghapus komentar utama sekaligus
+ * menghapus seluruh balasannya.
+ */
 import { ref, onMounted } from 'vue'
 import { RouterLink } from 'vue-router'
 import { api } from '@/services/api'
@@ -8,18 +17,21 @@ import { waktuRelatif } from '@/utils/format'
 import AppIcon from '@/components/ui/AppIcon.vue'
 
 const auth = useAuthStore()
-const komentar = useKomentarStore()
+const komentarStore = useKomentarStore()
 
 const data = ref([])
 const status = ref('menunggu')
+const jenis = ref('')            // '' | 'komentar' | 'balasan'
 const loading = ref(false)
 const galat = ref('')
+const pesan = ref('')
 
-// id komentar yang sedang dibalas + isi balasannya
-const balasId = ref(null)
+const balasId = ref(null)        // komentar yang sedang dibalas pengelola
 const isiBalasan = ref('')
 const mengirim = ref(false)
-const pesan = ref('')
+
+const ubahId = ref(null)         // baris yang sedang diubah isinya
+const isiUbah = ref('')
 
 const TAB = [
   { key: 'menunggu', label: 'Menunggu Persetujuan' },
@@ -27,11 +39,18 @@ const TAB = [
   { key: 'disetujui', label: 'Sudah Tampil' },
   { key: 'semua', label: 'Semua' },
 ]
+const JENIS = [
+  { key: '', label: 'Komentar + Balasan' },
+  { key: 'komentar', label: 'Komentar Saja' },
+  { key: 'balasan', label: 'Balasan Saja' },
+]
 
 function kueri() {
-  if (status.value === 'semua') return ''
-  if (status.value === 'belum-dibalas') return '&dibalas=belum'
-  return `&status=${status.value}`
+  let q = ''
+  if (status.value === 'belum-dibalas') q += '&dibalas=belum'
+  else if (status.value !== 'semua') q += `&status=${status.value}`
+  if (jenis.value) q += `&jenis=${jenis.value}`
+  return q
 }
 
 async function muat() {
@@ -40,7 +59,7 @@ async function muat() {
   try {
     const res = await api(`/admin/komentar?per_page=100${kueri()}`)
     data.value = res.data || []
-    await komentar.refresh()          // badge sidebar ikut menyegar
+    await komentarStore.refresh()
   } catch (e) {
     galat.value = e.message || 'Gagal memuat komentar.'
     data.value = []
@@ -49,9 +68,20 @@ async function muat() {
   }
 }
 
+function pilihTab(k) {
+  status.value = k
+  muat()
+}
+
+function pilihJenis(k) {
+  jenis.value = k
+  muat()
+}
+
 function bukaBalas(k) {
   balasId.value = balasId.value === k.id ? null : k.id
-  isiBalasan.value = k.balasan || ''
+  isiBalasan.value = ''
+  ubahId.value = null
   pesan.value = ''
 }
 
@@ -59,12 +89,10 @@ async function kirimBalasan(k) {
   mengirim.value = true
   pesan.value = ''
   try {
-    const res = await api(`/admin/komentar/${k.id}/balas`, {
-      method: 'POST',
-      body: { balasan: isiBalasan.value },
-    })
+    const res = await api(`/admin/komentar/${k.id}/balas`, { method: 'POST', body: { balasan: isiBalasan.value } })
     pesan.value = res.message || 'Balasan terkirim.'
     balasId.value = null
+    isiBalasan.value = ''
     await muat()
   } catch (e) {
     alert(e.message || 'Balasan gagal dikirim.')
@@ -73,13 +101,20 @@ async function kirimBalasan(k) {
   }
 }
 
-async function hapusBalasan(k) {
-  if (!confirm('Hapus balasan ini? Komentar pengunjung tetap ada.')) return
+function bukaUbah(k) {
+  ubahId.value = ubahId.value === k.id ? null : k.id
+  isiUbah.value = k.isi
+  balasId.value = null
+}
+
+async function simpanUbah(k) {
   try {
-    await api(`/admin/komentar/${k.id}/balasan`, { method: 'DELETE' })
+    await api(`/admin/komentar/${k.id}`, { method: 'PUT', body: { isi: isiUbah.value } })
+    ubahId.value = null
+    pesan.value = 'Isi berhasil diperbarui.'
     await muat()
   } catch (e) {
-    alert(e.message)
+    alert(e.message || 'Gagal menyimpan perubahan.')
   }
 }
 
@@ -93,9 +128,14 @@ async function setujui(k, nilai) {
 }
 
 async function hapus(k) {
-  if (!confirm(`Hapus komentar dari "${k.nama}"?`)) return
+  const adaBalasan = !k.parent_id && k.children_count > 0
+  const tanya = adaBalasan
+    ? `Hapus komentar "${k.nama}" beserta ${k.children_count} balasannya?`
+    : `Hapus ${k.parent_id ? 'balasan' : 'komentar'} dari "${k.nama}"?`
+  if (!confirm(tanya)) return
   try {
-    await api(`/admin/komentar/${k.id}`, { method: 'DELETE' })
+    const res = await api(`/admin/komentar/${k.id}`, { method: 'DELETE' })
+    pesan.value = res.message || 'Dihapus.'
     await muat()
   } catch (e) {
     alert(e.message)
@@ -111,34 +151,67 @@ onMounted(muat)
       <h1 class="text-2xl font-extrabold text-brand-950">Komentar Berita</h1>
       <p class="text-sm text-gray-500">
         <template v-if="auth.isAdmin">
-          Semua komentar dari seluruh berita. Komentar tampil di situs setelah disetujui.
+          Semua komentar &amp; balasan dari seluruh berita. Komentar tampil di situs setelah disetujui.
         </template>
         <template v-else>
-          Komentar pada berita <strong>milik Anda</strong>. Membalas komentar otomatis menampilkannya di situs.
+          Komentar &amp; balasan pada berita <strong>milik Anda</strong>. Anda bisa membalas, menyunting, atau menghapus yang tidak pantas.
         </template>
       </p>
     </div>
 
-    <div class="mb-5 flex flex-wrap gap-2">
+    <!-- Filter -->
+    <div class="mb-3 flex flex-wrap gap-2">
       <button
         v-for="t in TAB" :key="t.key"
         class="rounded-xl px-4 py-2 text-sm font-bold transition-colors"
         :class="status === t.key ? 'bg-brand-600 text-white' : 'bg-brand-50 text-brand-700 hover:bg-brand-100'"
-        @click="status = t.key; muat()"
+        @click="pilihTab(t.key)"
       >
         {{ t.label }}
       </button>
     </div>
+    <div class="mb-5 flex flex-wrap gap-2">
+      <button
+        v-for="j in JENIS" :key="j.key"
+        class="rounded-lg px-3 py-1.5 text-xs font-bold transition-colors"
+        :class="jenis === j.key ? 'bg-gray-800 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'"
+        @click="pilihJenis(j.key)"
+      >
+        {{ j.label }}
+      </button>
+    </div>
 
+    <p v-if="pesan" class="mb-4 rounded-xl bg-brand-50 px-4 py-2.5 text-sm font-semibold text-brand-700">{{ pesan }}</p>
     <p v-if="galat" class="mb-4 rounded-xl bg-red-50 px-4 py-3 text-sm font-semibold text-red-600">{{ galat }}</p>
     <p v-if="loading" class="py-16 text-center text-gray-400">Memuat…</p>
     <p v-else-if="!data.length" class="rounded-2xl bg-white py-16 text-center text-gray-400 shadow-sm">
-      Tidak ada komentar pada bagian ini.
+      Tidak ada data pada bagian ini.
     </p>
 
     <ul v-else class="space-y-3">
-      <li v-for="k in data" :key="k.id" class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-        <!-- Komentar pengunjung -->
+      <li
+        v-for="k in data" :key="k.id"
+        class="rounded-2xl border bg-white p-5 shadow-sm"
+        :class="k.parent_id ? 'border-l-4 border-l-gray-300' : 'border-gray-100'"
+      >
+        <!-- Penanda jenis -->
+        <div class="mb-2 flex flex-wrap items-center gap-2 text-xs">
+          <span
+            class="rounded-full px-2.5 py-0.5 font-bold"
+            :class="k.parent_id ? 'bg-gray-100 text-gray-600' : 'bg-brand-50 text-brand-700'"
+          >
+            {{ k.parent_id ? 'Balasan' : 'Komentar' }}
+          </span>
+          <span v-if="k.is_pengelola" class="rounded-full bg-brand-600 px-2.5 py-0.5 font-bold text-white">Pengelola</span>
+          <span v-if="k.balas_ke" class="text-gray-500">
+            untuk <strong class="text-brand-700">@{{ k.balas_ke }}</strong>
+          </span>
+          <span v-if="k.parent_id && k.parent" class="truncate text-gray-400" :title="k.parent.isi">
+            dari komentar {{ k.parent.nama }}
+          </span>
+        </div>
+
+        <!-- Identitas + status -->
         <div class="mb-2 flex flex-wrap items-center gap-2 text-sm">
           <span class="grid h-8 w-8 place-items-center rounded-full bg-brand-100 font-bold text-brand-700">
             {{ (k.nama || '?').charAt(0).toUpperCase() }}
@@ -152,34 +225,33 @@ onMounted(muat)
           >
             {{ k.is_approved ? 'Tampil' : 'Menunggu' }}
           </span>
-          <span
-            v-if="k.balasan"
-            class="rounded-full bg-brand-100 px-2.5 py-0.5 text-[11px] font-bold text-brand-700"
-          >
-            Sudah dibalas
-          </span>
         </div>
 
-        <p class="mb-3 text-sm leading-relaxed text-gray-700">{{ k.isi }}</p>
-
-        <!-- Balasan yang sudah ada -->
-        <div v-if="k.balasan" class="mb-3 rounded-xl border-l-4 border-brand-400 bg-brand-50/60 p-3">
-          <p class="mb-1 flex items-center gap-1.5 text-xs font-bold text-brand-700">
-            <AppIcon name="chat" :size="13" /> Balasan pengelola — {{ k.balasan_oleh }}
-            <span class="font-normal text-gray-400">· {{ waktuRelatif(k.balasan_at) }}</span>
-          </p>
-          <p class="text-sm leading-relaxed text-gray-700">{{ k.balasan }}</p>
-          <div class="mt-2 flex gap-2">
-            <button class="text-xs font-bold text-brand-700 hover:underline" @click="bukaBalas(k)">Ubah</button>
-            <button class="text-xs font-bold text-red-500 hover:underline" @click="hapusBalasan(k)">Hapus balasan</button>
+        <!-- Isi: tampil atau sedang diubah -->
+        <div v-if="ubahId === k.id" class="mb-3">
+          <textarea
+            v-model="isiUbah" rows="3" maxlength="1500"
+            class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
+          ></textarea>
+          <div class="mt-2 flex justify-end gap-2">
+            <button class="rounded-lg px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-100" @click="ubahId = null">
+              Batal
+            </button>
+            <button
+              class="rounded-lg bg-brand-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-brand-700"
+              @click="simpanUbah(k)"
+            >
+              Simpan Perubahan
+            </button>
           </div>
         </div>
+        <p v-else class="mb-3 text-sm leading-relaxed text-gray-700">{{ k.isi }}</p>
 
-        <!-- Form balasan -->
+        <!-- Form balasan pengelola -->
         <div v-if="balasId === k.id" class="mb-3">
           <textarea
             v-model="isiBalasan" rows="3" maxlength="1000"
-            placeholder="Tulis balasan Anda…"
+            placeholder="Tulis balasan resmi dari pengelola…"
             class="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-100"
           ></textarea>
           <div class="mt-2 flex justify-end gap-2">
@@ -187,16 +259,14 @@ onMounted(muat)
               Batal
             </button>
             <button
-              :disabled="mengirim"
-              class="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-brand-700 disabled:opacity-50"
+              :disabled="mengirim || isiBalasan.trim().length < 2"
+              class="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-4 py-1.5 text-xs font-bold text-white hover:bg-brand-700 disabled:opacity-40"
               @click="kirimBalasan(k)"
             >
               <AppIcon name="chat" :size="13" /> {{ mengirim ? 'Mengirim…' : 'Kirim Balasan' }}
             </button>
           </div>
         </div>
-
-        <p v-if="pesan" class="mb-3 rounded-lg bg-brand-50 px-3 py-2 text-xs font-semibold text-brand-700">{{ pesan }}</p>
 
         <!-- Aksi -->
         <div class="flex flex-wrap items-center gap-3 border-t border-gray-100 pt-3 text-xs">
@@ -208,13 +278,19 @@ onMounted(muat)
             <AppIcon name="newspaper" :size="14" /> {{ k.post.judul }}
           </RouterLink>
 
-          <div class="ml-auto flex items-center gap-2">
+          <div class="ml-auto flex flex-wrap items-center gap-2">
             <button
-              v-if="!k.balasan && balasId !== k.id"
+              v-if="!k.parent_id && balasId !== k.id"
               class="inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-3 py-1.5 font-bold text-brand-700 hover:bg-brand-100"
               @click="bukaBalas(k)"
             >
               <AppIcon name="chat" :size="14" /> Balas
+            </button>
+            <button
+              class="inline-flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-1.5 font-bold text-gray-600 hover:bg-gray-200"
+              @click="bukaUbah(k)"
+            >
+              <AppIcon name="pencil" :size="14" /> Ubah
             </button>
             <button
               v-if="!k.is_approved"
