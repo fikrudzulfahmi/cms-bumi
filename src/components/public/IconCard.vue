@@ -18,6 +18,7 @@ defineProps({
         :alt="item.nama"
         class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
         loading="lazy"
+        decoding="async"
       />
       <div v-else class="grid h-full w-full place-items-center bg-gradient-to-br from-brand-500 to-brand-700 text-white/80">
         <AppIcon :name="icon" :size="40" />

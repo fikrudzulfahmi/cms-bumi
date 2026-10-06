@@ -13,8 +13,8 @@ const uploading = ref(false)
 const input = ref(null)
 const catatan = ref('')
 
-/** Ukuran maksimal yang kita izinkan sesudah dikompres (sama dengan batas server: 12 MB). */
-const BATAS_MAKS = 12 * 1024 * 1024
+/** Ukuran maksimal berkas yang diterima server (5 MB). */
+const BATAS_MAKS = 5 * 1024 * 1024
 /** Sisi terpanjang gambar hasil kompresi. */
 const SISI_MAKS = 2000
 /** Kalau berkas sudah lebih kecil dari ini, tidak perlu dikompres. */
@@ -124,7 +124,7 @@ async function onFile(e) {
         <input ref="input" type="file" accept="image/jpeg,image/png,image/webp,image/gif" class="hidden" @change="onFile" />
         <p v-if="catatan" class="text-xs font-medium text-green-600">{{ catatan }}</p>
         <p class="text-[11px] leading-snug text-gray-400">
-          Foto dari HP otomatis dikecilkan supaya cepat terunggah. Maksimal 12 MB.
+          Foto dari HP otomatis dikecilkan &amp; dijadikan WebP oleh server agar cepat dimuat. Maksimal 5 MB.
         </p>
         <button
           v-if="modelValue"

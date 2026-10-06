@@ -58,7 +58,7 @@ onMounted(async () => {
         </div>
       </div>
 
-      <img v-if="post.gambar_url" :src="post.gambar_url" :alt="post.judul" class="mt-8 aspect-video w-full rounded-3xl object-cover shadow-lg" />
+      <img loading="lazy" decoding="async" v-if="post.gambar_url" :src="post.gambar_url" :alt="post.judul" class="mt-8 aspect-video w-full rounded-3xl object-cover shadow-lg" />
 
       <div class="prose-cms mt-8 text-[17px] leading-relaxed text-gray-700" v-html="post.konten || post.ringkasan"></div>
 

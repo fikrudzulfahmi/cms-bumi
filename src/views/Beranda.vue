@@ -111,7 +111,7 @@ onMounted(async () => {
         <div class="relative hidden lg:block">
           <div class="animate-float">
             <div class="relative mx-auto max-w-md overflow-hidden rounded-[2rem] border-4 border-white/20 bg-gradient-to-br from-brand-500 to-brand-800 shadow-2xl">
-              <img v-if="heroImage" :src="heroImage" alt="Peserta didik madrasah" class="h-[440px] w-full object-contain" />
+              <img v-if="heroImage" loading="eager" fetchpriority="high" :src="heroImage" alt="Peserta didik madrasah" class="h-[440px] w-full object-contain" />
               <div v-else class="grid h-[440px] w-full place-items-center text-white/70">
                 <AppIcon name="landmark" :size="64" />
               </div>
@@ -196,7 +196,7 @@ onMounted(async () => {
       <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
         <div v-for="(g, i) in galeri" :key="g.id" class="group relative overflow-hidden rounded-3xl"
           :class="i === 0 ? 'col-span-2 row-span-2' : ''">
-          <img :src="g.gambar_url" :alt="g.judul" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" />
+          <img :src="g.gambar_url" :alt="g.judul" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110" loading="lazy" decoding="async" />
           <div class="absolute inset-0 bg-gradient-to-t from-brand-950/70 via-transparent to-transparent opacity-0 transition-opacity group-hover:opacity-100"></div>
           <div class="absolute bottom-3 left-4 translate-y-2 font-bold text-white opacity-0 transition-all group-hover:translate-y-0 group-hover:opacity-100">{{ g.judul }}</div>
         </div>
@@ -216,7 +216,7 @@ onMounted(async () => {
               </div>
               <p class="text-sm leading-relaxed text-brand-50/90">“{{ item.pesan }}”</p>
               <div class="mt-5 flex items-center gap-3">
-                <img v-if="item.foto_url" :src="item.foto_url" :alt="item.nama" class="h-11 w-11 rounded-full object-cover ring-2 ring-gold-400/50" />
+                <img loading="lazy" decoding="async" v-if="item.foto_url" :src="item.foto_url" :alt="item.nama" class="h-11 w-11 rounded-full object-cover ring-2 ring-gold-400/50" />
                 <div v-else class="grid h-11 w-11 place-items-center rounded-full bg-gold-400 font-bold text-white">{{ (item.nama || '?')[0] }}</div>
                 <div>
                   <div class="text-sm font-bold text-white">{{ item.nama }}</div>

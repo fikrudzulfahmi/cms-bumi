@@ -72,7 +72,7 @@ watch(active, load)
           </div>
           <p class="text-sm leading-relaxed text-gray-600">“{{ f.pesan }}”</p>
           <div class="mt-5 flex items-center gap-3">
-            <img v-if="f.foto_url" :src="f.foto_url" :alt="f.nama" class="h-11 w-11 rounded-full object-cover ring-2 ring-brand-200" />
+            <img loading="lazy" decoding="async" v-if="f.foto_url" :src="f.foto_url" :alt="f.nama" class="h-11 w-11 rounded-full object-cover ring-2 ring-brand-200" />
             <div v-else class="grid h-11 w-11 place-items-center rounded-full bg-brand-500 font-bold text-white">{{ (f.nama || '?')[0] }}</div>
             <div>
               <div class="text-sm font-bold text-brand-950">{{ f.nama }}</div>

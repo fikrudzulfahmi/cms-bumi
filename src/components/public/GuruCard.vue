@@ -25,6 +25,7 @@ function initials(name) {
         :alt="teacher.nama"
         class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
         loading="lazy"
+        decoding="async"
       />
       <div v-else class="grid h-full w-full place-items-center text-5xl font-extrabold text-brand-600">
         {{ initials(teacher.nama) }}

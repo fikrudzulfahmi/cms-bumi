@@ -34,7 +34,7 @@ onMounted(async () => {
 
       <div class="mt-6 overflow-hidden rounded-[2rem] glass-card">
         <div class="relative h-64 overflow-hidden sm:h-80">
-          <img v-if="major.gambar_url" :src="major.gambar_url" :alt="major.nama" class="h-full w-full object-cover" />
+          <img loading="lazy" decoding="async" v-if="major.gambar_url" :src="major.gambar_url" :alt="major.nama" class="h-full w-full object-cover" />
           <div v-else class="grid h-full w-full place-items-center bg-gradient-to-br from-brand-500 to-brand-700 text-white/80">
             <AppIcon name="book" :size="64" />
           </div>
