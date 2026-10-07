@@ -24,7 +24,7 @@ onMounted(async () => {
     <section class="mx-auto max-w-5xl px-4 py-16 sm:px-6">
       <SectionHeader eyebrow="Sejarah" title="Perjalanan Madrasah" />
       <div class="rounded-3xl glass-card p-8 sm:p-10">
-        <div class="prose-cms text-gray-600" v-html="cms.profile?.sejarah || '<p>Belum ada data sejarah.</p>'"></div>
+        <div class="prose-cms text-gray-600" v-html="cms.profile?.sejarah || '<p>Belum ada data sejarah.</p>'" v-lazikan="{ utamaPertama: false }"></div>
       </div>
     </section>
 
@@ -41,7 +41,7 @@ onMounted(async () => {
           <div class="rounded-3xl bg-white p-8 shadow-lg shadow-brand-900/5">
             <AppIcon name="clipboard" :size="28" class="mb-3 text-gold-500" />
             <h3 class="mb-2 text-lg font-extrabold text-brand-900">Misi</h3>
-            <div class="prose-cms text-gray-600" v-html="cms.profile?.misi || '<p>—</p>'"></div>
+            <div class="prose-cms text-gray-600" v-html="cms.profile?.misi || '<p>—</p>'" v-lazikan="{ utamaPertama: false }"></div>
           </div>
         </div>
       </div>

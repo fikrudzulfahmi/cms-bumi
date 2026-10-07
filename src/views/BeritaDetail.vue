@@ -74,9 +74,24 @@ onMounted(async () => {
         </div>
       </div>
 
-      <img loading="lazy" decoding="async" v-if="post.gambar_url" :src="post.gambar_url" :alt="post.judul" class="mt-8 aspect-video w-full rounded-3xl object-cover shadow-lg" />
+      <!-- Gambar utama = elemen terbesar yang dilihat (LCP): dimuat segera, bukan lazy -->
+      <img
+        v-if="post.gambar_url"
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+        width="1200"
+        height="675"
+        :src="post.gambar_url"
+        :alt="post.judul"
+        class="mt-8 aspect-video w-full rounded-3xl object-cover shadow-lg"
+      />
 
-      <div class="prose-cms mt-8 text-[17px] leading-relaxed text-gray-700" v-html="post.konten || post.ringkasan"></div>
+      <div
+        class="prose-cms mt-8 text-[17px] leading-relaxed text-gray-700"
+        v-html="post.konten || post.ringkasan"
+        v-lazikan="{ utamaPertama: false }"
+      ></div>
 
       <!-- Pengunjung, rating, suka/tidak suka, dan komentar -->
       <InteraksiBerita :slug="post.slug" :views="views" />

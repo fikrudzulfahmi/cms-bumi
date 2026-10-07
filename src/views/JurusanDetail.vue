@@ -46,7 +46,7 @@ onMounted(async () => {
         </div>
         <div class="p-8">
           <h2 class="mb-4 text-lg font-extrabold text-brand-900">Tentang Jurusan</h2>
-          <div class="prose-cms text-gray-600" v-html="major.deskripsi || '<p>—</p>'"></div>
+          <div class="prose-cms text-gray-600" v-html="major.deskripsi || '<p>—</p>'" v-lazikan="{ utamaPertama: false }"></div>
         </div>
       </div>
     </template>

@@ -110,7 +110,7 @@ function display(item, name) {
   if (!f) return v ?? '—'
   if (f.type === 'image') {
     return v
-      ? `<img src="${assetUrl(v)}" class="h-10 w-10 rounded-lg object-cover" />`
+      ? `<img src="${assetUrl(v)}" alt="" loading="lazy" decoding="async" class="h-10 w-10 rounded-lg object-cover" />`
       : '<span class="text-gray-300">—</span>'
   }
   if (f.type === 'boolean') return v ? 'Ya' : '—'

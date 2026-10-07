@@ -155,7 +155,7 @@ onMounted(async () => {
             <AppIcon name="clipboard" :size="24" />
           </div>
           <h3 class="mb-2 text-lg font-extrabold text-brand-900">Misi</h3>
-          <div class="prose-cms text-gray-600" v-html="cms.profile?.misi || '<p>—</p>'"></div>
+          <div class="prose-cms text-gray-600" v-html="cms.profile?.misi || '<p>—</p>'" v-lazikan="{ utamaPertama: false }"></div>
         </div>
       </div>
     </section>
@@ -255,7 +255,7 @@ onMounted(async () => {
             <div>
               <span class="inline-block rounded-full bg-gold-400/20 px-4 py-1 text-xs font-bold uppercase tracking-widest text-gold-300">PPDB</span>
               <h2 class="mt-4 text-3xl font-extrabold text-white sm:text-4xl">Informasi Pendaftaran</h2>
-              <div class="prose-cms mt-4 text-sm leading-relaxed text-brand-100/85" v-html="cms.settings.informasi_pendaftaran || '<p>—</p>'"></div>
+              <div class="prose-cms mt-4 text-sm leading-relaxed text-brand-100/85" v-html="cms.settings.informasi_pendaftaran || '<p>—</p>'" v-lazikan="{ utamaPertama: false }"></div>
             </div>
             <div class="flex flex-col items-center gap-4">
               <div class="glass-dark w-full rounded-2xl p-6 text-center">
