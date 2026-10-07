@@ -49,6 +49,7 @@ const sections = [
     fields: [
       { key: 'informasi_pendaftaran', label: 'Informasi Pendaftaran', type: 'richtext' },
       { key: 'link_ppdb', label: 'Link PPDB (tujuan tombol pendaftaran)', type: 'text' },
+      { key: 'link_presensi', label: 'Link Sistem Presensi (tombol di navbar)', type: 'text' },
     ],
   },
   {

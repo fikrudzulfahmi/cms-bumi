@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { RouterLink, useRoute } from 'vue-router'
 import { useCmsStore } from '@/stores/cms'
 import LogoMark from './LogoMark.vue'
+import AppIcon from '@/components/ui/AppIcon.vue'
 
 const cms = useCmsStore()
 const route = useRoute()
@@ -53,12 +54,13 @@ function isActive(to) {
 
         <div class="flex items-center gap-2">
           <a
-            :href="cms.linkPpdb"
+            v-if="cms.linkPresensi"
+            :href="cms.linkPresensi"
             target="_blank"
             rel="noopener"
-            class="hidden rounded-xl bg-gradient-to-r from-gold-500 to-gold-400 px-4 py-2 text-sm font-bold text-white shadow-md shadow-gold-500/30 transition-transform hover:scale-[1.03] sm:inline-flex"
+            class="hidden items-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-4 py-2 text-sm font-bold text-white shadow-md shadow-brand-600/30 transition-transform hover:scale-[1.03] sm:inline-flex"
           >
-            Info PPDB
+            <AppIcon name="clipboard" :size="16" /> Sistem Presensi
           </a>
           <button
             class="grid h-10 w-10 place-items-center rounded-xl text-brand-800 hover:bg-brand-50 lg:hidden"
@@ -88,9 +90,9 @@ function isActive(to) {
           >
             {{ l.label }}
           </RouterLink>
-          <a :href="cms.linkPpdb" target="_blank" rel="noopener" @click="open = false"
-            class="mt-2 block rounded-xl bg-gradient-to-r from-gold-500 to-gold-400 px-4 py-2.5 text-center text-sm font-bold text-white">
-            Info PPDB
+          <a v-if="cms.linkPresensi" :href="cms.linkPresensi" target="_blank" rel="noopener" @click="open = false"
+            class="mt-2 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 px-4 py-2.5 text-center text-sm font-bold text-white">
+            <AppIcon name="clipboard" :size="16" /> Sistem Presensi
           </a>
         </div>
       </transition>

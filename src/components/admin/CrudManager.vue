@@ -5,6 +5,7 @@ import ImageUpload from './ImageUpload.vue'
 import RichText from './RichText.vue'
 import SeoAnalisis from './SeoAnalisis.vue'
 import BintangRating from '@/components/public/BintangRating.vue'
+import TombolBagikan from '@/components/public/TombolBagikan.vue'
 import { formatDate, stripHtml } from '@/utils/format'
 import AppIcon from '@/components/ui/AppIcon.vue'
 
@@ -17,7 +18,15 @@ const props = defineProps({
   seo: { type: Boolean, default: false },
   // Label kolom tambahan (mis. kolom statistik yang tidak ada di formulir).
   labels: { type: Object, default: () => ({}) },
+  // Tampilkan tombol bagikan tautan publik di tiap baris (dipakai daftar berita).
+  bagikan: { type: Boolean, default: false },
 })
+
+/** Tautan publik sebuah item (dipakai tombol bagikan di tabel berita). */
+function tautanPublik(item) {
+  const dasar = typeof window !== 'undefined' ? window.location.origin : ''
+  return item.slug ? `${dasar}/berita/${item.slug}` : dasar
+}
 
 const items = ref([])
 const loading = ref(false)
@@ -171,8 +180,16 @@ onMounted(load)
               <span v-else>{{ display(item, c) }}</span>
             </td>
             <td class="px-4 py-3 text-right">
-              <button class="rounded-lg bg-brand-100 px-3 py-1.5 text-xs font-bold text-brand-700 hover:bg-brand-200" @click="openEdit(item)">Edit</button>
-              <button class="ml-2 rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-100" @click="remove(item)">Hapus</button>
+              <div class="flex flex-wrap items-center justify-end gap-2">
+                <TombolBagikan
+                  v-if="bagikan && item.slug"
+                  ringkas
+                  :judul="item.judul || title"
+                  :url="tautanPublik(item)"
+                />
+                <button class="rounded-lg bg-brand-100 px-3 py-1.5 text-xs font-bold text-brand-700 hover:bg-brand-200" @click="openEdit(item)">Edit</button>
+                <button class="rounded-lg bg-red-50 px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-100" @click="remove(item)">Hapus</button>
+              </div>
             </td>
           </tr>
           <tr v-if="!items.length">

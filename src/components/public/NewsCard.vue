@@ -7,6 +7,7 @@ import { warnaKategori } from '@/utils/kategori'
 import { useCmsStore } from '@/stores/cms'
 import AppIcon from '@/components/ui/AppIcon.vue'
 import BintangRating from './BintangRating.vue'
+import TombolBagikan from './TombolBagikan.vue'
 
 const props = defineProps({
   post: { type: Object, required: true },
@@ -16,27 +17,41 @@ const cms = useCmsStore()
 
 const kategoriLabel = computed(() => cms.namaKategori(props.post.kategori))
 const kategoriColor = computed(() => warnaKategori(props.post.kategori))
+
+/** Alamat lengkap berita ini — dipakai tombol bagikan. */
+const tautan = computed(() => {
+  const dasar = typeof window !== 'undefined' ? window.location.origin : ''
+  return `${dasar}/berita/${props.post.slug}`
+})
 </script>
 
 <template>
-  <RouterLink :to="`/berita/${post.slug}`" class="group block h-full overflow-hidden rounded-3xl glass-card transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl">
-    <div class="relative h-44 overflow-hidden">
-      <img
-        v-if="post.gambar_url"
-        :src="post.gambar_url"
-        :alt="post.judul"
-        class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-        loading="lazy"
-        decoding="async"
-      />
-      <div v-else class="grid h-full w-full place-items-center bg-gradient-to-br from-brand-500 to-brand-700 text-white/70">
-        <AppIcon name="newspaper" :size="40" />
-      </div>
-      <span class="absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-bold shadow" :class="kategoriColor">
-        {{ kategoriLabel }}
-      </span>
+  <div class="relative h-full">
+    <!-- Tombol bagikan: di luar tautan kartu supaya klik tidak ikut membuka berita -->
+    <div class="absolute right-3 top-3 z-10">
+      <TombolBagikan ringkas :judul="post.judul" :url="tautan" terang />
     </div>
-    <div class="p-5">
+
+    <RouterLink :to="`/berita/${post.slug}`" class="group block h-full overflow-hidden rounded-3xl glass-card transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl">
+      <div class="relative h-44 overflow-hidden">
+        <img
+          v-if="post.gambar_url"
+          :src="post.gambar_url"
+          :srcset="post.gambar_srcset || undefined"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 400px"
+          :alt="post.judul"
+          class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+          loading="lazy"
+          decoding="async"
+        />
+        <div v-else class="grid h-full w-full place-items-center bg-gradient-to-br from-brand-500 to-brand-700 text-white/70">
+          <AppIcon name="newspaper" :size="40" />
+        </div>
+        <span class="absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-bold shadow" :class="kategoriColor">
+          {{ kategoriLabel }}
+        </span>
+      </div>
+      <div class="p-5">
       <div class="mb-2 flex items-center gap-2 text-xs font-medium text-gray-400">
         <AppIcon name="calendar" :size="14" />
         <span>{{ formatDate(post.tanggal) }}</span>
@@ -64,6 +79,7 @@ const kategoriColor = computed(() => warnaKategori(props.post.kategori))
         Baca selengkapnya
         <AppIcon name="arrowRight" :size="16" class="transition-transform group-hover:translate-x-1" />
       </span>
-    </div>
-  </RouterLink>
-</template>
+      </div>
+      </RouterLink>
+      </div>
+      </template>

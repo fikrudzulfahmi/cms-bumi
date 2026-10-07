@@ -17,6 +17,9 @@ export const useCmsStore = defineStore('cms', {
     /** Tautan pendaftaran PPDB (diatur di Pengaturan, punya nilai bawaan). */
     linkPpdb: (s) => s.settings.link_ppdb || 'https://psb.bustanulmutaallimin.com',
 
+    /** Tautan Sistem Presensi (diatur di Pengaturan) — tombol di navbar. */
+    linkPresensi: (s) => s.settings.link_presensi || 'https://sistem.bustanulmutaallimin.com',
+
     /** Nama kategori dari slug — mendukung kategori yang ditambahkan admin. */
     namaKategori: (s) => (slug) => {
       const k = s.kategori.find((x) => x.slug === slug)

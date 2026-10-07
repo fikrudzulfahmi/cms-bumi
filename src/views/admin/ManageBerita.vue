@@ -136,6 +136,7 @@ onMounted(async () => {
       :fields="fields"
       :columns="columns"
       :labels="labels"
+      bagikan
       seo
     />
   </div>

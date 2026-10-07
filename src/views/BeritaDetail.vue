@@ -7,6 +7,7 @@ import { useCmsStore } from '@/stores/cms'
 import { setOpenGraph } from '@/utils/seo'
 import NewsCard from '@/components/public/NewsCard.vue'
 import InteraksiBerita from '@/components/public/InteraksiBerita.vue'
+import TombolBagikan from '@/components/public/TombolBagikan.vue'
 import AppIcon from '@/components/ui/AppIcon.vue'
 
 const route = useRoute()
@@ -18,6 +19,12 @@ const views = ref(0)
 
 // Kategori bisa ditambah admin, jadi namanya diambil dari daftar kategori.
 const kategoriLabel = computed(() => (post.value ? cms.namaKategori(post.value.kategori) : ''))
+
+/** Alamat lengkap berita ini — untuk tombol bagikan. */
+const tautanBerita = computed(() => {
+  const dasar = typeof window !== 'undefined' ? window.location.origin : ''
+  return post.value ? `${dasar}/berita/${post.value.slug}` : dasar
+})
 
 onMounted(async () => {
   try {
@@ -83,6 +90,8 @@ onMounted(async () => {
         width="1200"
         height="675"
         :src="post.gambar_url"
+        :srcset="post.gambar_srcset || undefined"
+        sizes="(max-width: 896px) 100vw, 896px"
         :alt="post.judul"
         class="mt-8 aspect-video w-full rounded-3xl object-cover shadow-lg"
       />
@@ -92,6 +101,14 @@ onMounted(async () => {
         v-html="post.konten || post.ringkasan"
         v-lazikan="{ utamaPertama: false }"
       ></div>
+
+      <!-- Bagikan berita ini (WhatsApp, Facebook, Telegram, salin tautan) -->
+      <div class="mt-8 rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
+        <p class="mb-3 flex items-center gap-2 text-sm font-bold text-brand-950">
+          <AppIcon name="share" :size="16" /> Bagikan berita ini
+        </p>
+        <TombolBagikan :judul="post.judul" :url="tautanBerita" />
+      </div>
 
       <!-- Pengunjung, rating, suka/tidak suka, dan komentar -->
       <InteraksiBerita :slug="post.slug" :views="views" />

@@ -17,6 +17,7 @@ import {
   Bold, Italic, Underline, AlignLeft, AlignCenter, AlignRight, AlignJustify,
   ListOrdered, List, Eraser,
   Pencil, Trash2, Activity,
+  MessageCircle, ThumbsUp, Send, Link2, Share2,
 } from 'lucide-vue-next'
 
 const props = defineProps({
@@ -99,6 +100,11 @@ const ICONS = {
   pencil: Pencil,
   trash: Trash2,
   activity: Activity,
+  messageCircle: MessageCircle,
+  thumbsUp: ThumbsUp,
+  send: Send,
+  link: Link2,
+  share: Share2,
 }
 
 const Comp = ICONS[props.name] || Sparkles

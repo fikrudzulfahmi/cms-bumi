@@ -323,7 +323,10 @@ function susun_konten(string $jalur, ?array $artikel, string $nama, string $moto
             $b[] = '<p><small>'.e(implode(' · ', $info)).'</small></p>';
         }
         if (! empty($artikel['gambar_url'])) {
-            $b[] = '<img src="'.e($url($artikel['gambar_url'])).'" alt="'.e($artikel['judul'] ?? '').'" width="1200" height="675" loading="eager" fetchpriority="high" decoding="async">';
+            $srcset = trim((string) ($artikel['gambar_srcset'] ?? ''));
+            $b[] = '<img src="'.e($url($artikel['gambar_url'])).'"'
+                .($srcset !== '' ? ' srcset="'.e($srcset).'" sizes="(max-width: 896px) 100vw, 896px"' : '')
+                .' alt="'.e($artikel['judul'] ?? '').'" width="1200" height="675" loading="eager" fetchpriority="high" decoding="async">';
         }
         // Isi artikel apa adanya (ditulis admin lewat editor), tag berisiko dibuang.
         $isi = (string) ($artikel['konten'] ?? '');
