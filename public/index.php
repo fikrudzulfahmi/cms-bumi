@@ -329,6 +329,22 @@ function susun_konten(string $jalur, ?array $artikel, string $nama, string $moto
         $isi = (string) ($artikel['konten'] ?? '');
         $isi = preg_replace('#<(script|style|iframe|object|embed)[^>]*>.*?</\1>#is', '', $isi) ?? '';
         $isi = preg_replace('#<(script|style|iframe|object|embed)[^>]*/?>#is', '', $isi) ?? '';
+        // Gambar di dalam isi berada jauh di bawah layar -> lazy, dan ukuran
+        // dicadangkan supaya tata letak tidak bergeser saat gambar masuk.
+        $isi = preg_replace_callback('#<img\b([^>]*)>#i', function ($m) {
+            $atribut = $m[1];
+            $tambah = '';
+            if (! preg_match('#\bloading=#i', $atribut)) {
+                $tambah .= ' loading="lazy"';
+            }
+            if (! preg_match('#\bdecoding=#i', $atribut)) {
+                $tambah .= ' decoding="async"';
+            }
+            if (! preg_match('#\bwidth=#i', $atribut)) {
+                $tambah .= ' style="aspect-ratio:16/9;object-fit:cover;max-width:100%"';
+            }
+            return '<img'.$atribut.$tambah.'>';
+        }, $isi) ?? $isi;
         if (trim(strip_tags($isi)) === '') {
             $isi = '<p>'.e($potong($artikel['ringkasan'] ?? '', 400)).'</p>';
         }
