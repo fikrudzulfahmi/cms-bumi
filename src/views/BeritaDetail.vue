@@ -26,6 +26,22 @@ const tautanBerita = computed(() => {
   return post.value ? `${dasar}/berita/${post.value.slug}` : dasar
 })
 
+const youtubeEmbedUrl = computed(() => {
+  if (!post.value || !post.value.youtube_url) return ''
+  const url = post.value.youtube_url
+  let videoId = ''
+  if (url.includes('youtu.be/')) {
+    videoId = url.split('youtu.be/')[1]?.split('?')[0]
+  } else if (url.includes('watch?v=')) {
+    videoId = url.split('watch?v=')[1]?.split('&')[0]
+  } else if (url.includes('embed/')) {
+    videoId = url.split('embed/')[1]?.split('?')[0]
+  } else if (/^[a-zA-Z0-9_-]{11}$/.test(url)) {
+    videoId = url
+  }
+  return videoId ? `https://www.youtube.com/embed/${videoId}` : ''
+})
+
 onMounted(async () => {
   try {
     post.value = (await api(`/berita/${route.params.slug}`)).data
@@ -95,6 +111,16 @@ onMounted(async () => {
         :alt="post.judul"
         class="mt-8 aspect-video w-full rounded-3xl object-cover shadow-lg"
       />
+
+      <!-- Pemutar YouTube -->
+      <div v-if="youtubeEmbedUrl" class="mt-8 aspect-video w-full overflow-hidden rounded-3xl bg-black shadow-lg">
+        <iframe
+          :src="youtubeEmbedUrl"
+          class="h-full w-full border-0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowfullscreen
+        ></iframe>
+      </div>
 
       <div
         class="prose-cms mt-8 text-[17px] leading-relaxed text-gray-700"

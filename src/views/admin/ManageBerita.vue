@@ -24,6 +24,7 @@ const fields = computed(() => [
   },
   { name: 'tanggal', label: 'Tanggal', type: 'date' },
   { name: 'gambar', label: 'Gambar', type: 'image', dir: 'berita' },
+  { name: 'youtube_url', label: 'Link YouTube (bisa langsung diputar di berita)', type: 'text' },
   { name: 'ringkasan', label: 'Ringkasan', type: 'textarea' },
   // SEO ala Yoast: judul & deskripsi yang dibaca Google/WhatsApp bisa diatur terpisah.
   {
